@@ -12,12 +12,16 @@
   import ChartLayout from './layouts/ChartLayout.svelte';
   import SunLayout from './layouts/SunLayout.svelte';
   import BentoLayout from './layouts/BentoLayout.svelte';
+  import DayPanel from './DayPanel.svelte';
 
   const style = getParam('style', 'classic');
   const opts = readOptions();
 
   let data = $state<WeatherData | null>(null);
   let error = $state('');
+  // dia aberto no painel de detalhes (null = fechado)
+  let picked = $state<number | null>(null);
+  const pick = (index: number) => (picked = index);
 
   /** Busca (ou relê do cache) e guarda o resultado. */
   async function load() {
@@ -42,25 +46,28 @@
   {:else if !data}
     <p class="note loading">Loading weather…</p>
   {:else if style === 'hero'}
-    <HeroLayout {data} {opts} />
+    <HeroLayout {data} {opts} onpick={pick} />
   {:else if style === 'minimal'}
     <MinimalLayout {data} {opts} />
   {:else if style === 'strip'}
-    <StripLayout {data} {opts} />
+    <StripLayout {data} {opts} onpick={pick} />
   {:else if style === 'list'}
-    <ListLayout {data} {opts} />
+    <ListLayout {data} {opts} onpick={pick} />
   {:else if style === 'glass'}
-    <GlassLayout {data} {opts} />
+    <GlassLayout {data} {opts} onpick={pick} />
   {:else if style === 'terminal'}
     <TerminalLayout {data} {opts} />
   {:else if style === 'chart'}
-    <ChartLayout {data} {opts} />
+    <ChartLayout {data} {opts} onpick={pick} />
   {:else if style === 'sun'}
     <SunLayout {data} {opts} />
   {:else if style === 'bento'}
     <BentoLayout {data} {opts} />
   {:else}
-    <ClassicLayout {data} {opts} />
+    <ClassicLayout {data} {opts} onpick={pick} />
+  {/if}
+  {#if data && picked !== null}
+    <DayPanel {data} {opts} index={picked} onclose={() => (picked = null)} onnav={pick} />
   {/if}
 </main>
 

@@ -2,10 +2,10 @@
      por dia (mínima → máxima) na escala da semana, estilo app de clima do celular. -->
 <script lang="ts">
   import { type WeatherData, type WeatherOptions, describe, dayName } from '../api';
-  import { deg, dayHref } from '../format';
+  import { deg, dayAction } from '../format';
   import WeatherIcon from '../WeatherIcon.svelte';
 
-  let { data, opts }: { data: WeatherData; opts: WeatherOptions } = $props();
+  let { data, opts, onpick }: { data: WeatherData; opts: WeatherOptions; onpick: (index: number) => void } = $props();
   const days = $derived(data.daily.slice(0, opts.days));
   const lo = $derived(Math.min(...days.map((d) => d.min)));
   const hi = $derived(Math.max(...days.map((d) => d.max)));
@@ -24,7 +24,8 @@
     <span class="city">{data.place}{#if opts.showRegion && data.region}<small>{data.region}</small>{/if}</span>
   </header>
   {#each days as d, i (d.date)}
-    <svelte:element this={dayHref(data, opts, d.date, i) ? 'a' : 'div'} href={dayHref(data, opts, d.date, i)} target="_blank" rel="noreferrer" class="row">
+    {@const act = dayAction(data, opts, d.date, i, onpick)}
+    <svelte:element this={act.tag} {...act.attrs} class="row">
       <span class="name">{dayName(d.date, i, opts.lang)}</span>
       <span class="icon">
         <WeatherIcon code={d.code} size={22} animate={opts.animate} />
@@ -62,6 +63,8 @@
   /* faixa do dia: azul nas mínimas, laranja nas máximas */
   .range { position: absolute; top: 0; bottom: 0; border-radius: 99px; background: linear-gradient(90deg, #4dab9a, #ffc53d, #ff7369); }
   .dot { position: absolute; top: 50%; width: 9px; height: 9px; border-radius: 50%; background: #fff; border: 2px solid var(--bg-page); transform: translate(-50%, -50%); }
-  a { color: inherit; text-decoration: none; cursor: pointer; transition: background 0.15s, transform 0.15s; }
-  a:hover { background: color-mix(in srgb, var(--text) 6%, transparent); }
+  /* blocos clicáveis: link ou botão sem o visual padrão do navegador */
+  a, button { all: unset; box-sizing: border-box; color: inherit; text-decoration: none; cursor: pointer; transition: background 0.15s, transform 0.15s; }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  a:hover, button:hover { background: color-mix(in srgb, var(--text) 6%, transparent); }
 </style>

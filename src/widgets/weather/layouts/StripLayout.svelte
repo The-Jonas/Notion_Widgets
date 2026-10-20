@@ -1,10 +1,10 @@
 <!-- Layout faixa: tudo numa linha só, pra blocos baixos (ex.: 90 px de altura). -->
 <script lang="ts">
   import { type WeatherData, type WeatherOptions, dayName } from '../api';
-  import { deg, dayHref } from '../format';
+  import { deg, dayAction } from '../format';
   import WeatherIcon from '../WeatherIcon.svelte';
 
-  let { data, opts }: { data: WeatherData; opts: WeatherOptions } = $props();
+  let { data, opts, onpick }: { data: WeatherData; opts: WeatherOptions; onpick: (index: number) => void } = $props();
   const days = $derived(data.daily.slice(1, opts.days));
 </script>
 
@@ -20,7 +20,8 @@
   <div class="divider"></div>
   <div class="days">
     {#each days as d, i (d.date)}
-      <svelte:element this={dayHref(data, opts, d.date, i + 1) ? 'a' : 'div'} href={dayHref(data, opts, d.date, i + 1)} target="_blank" rel="noreferrer" class="day">
+      {@const act = dayAction(data, opts, d.date, i + 1, onpick)}
+      <svelte:element this={act.tag} {...act.attrs} class="day">
         <span class="name">{dayName(d.date, i + 1, opts.lang)}</span>
         <WeatherIcon code={d.code} size={20} animate={opts.animate} />
         <span class="range">{deg(d.max)}<i>{deg(d.min)}</i></span>
@@ -42,6 +43,8 @@
   .name { font-size: 10px; font-weight: 600; color: var(--text-muted); }
   .range { font-size: 11px; font-weight: 600; }
   .range i { font-style: normal; color: var(--text-muted); margin-left: 4px; font-weight: 400; }
-  a { color: inherit; text-decoration: none; cursor: pointer; transition: background 0.15s, transform 0.15s; }
-  a:hover { transform: translateY(-2px); }
+  /* blocos clicáveis: link ou botão sem o visual padrão do navegador */
+  a, button { all: unset; box-sizing: border-box; color: inherit; text-decoration: none; cursor: pointer; transition: background 0.15s, transform 0.15s; }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  a:hover, button:hover { transform: translateY(-2px); }
 </style>

@@ -2,10 +2,10 @@
      e embaixo a previsão dos próximos dias em colunas (estilo Indify, repaginado). -->
 <script lang="ts">
   import { type WeatherData, type WeatherOptions, describe, dayName, TEXT } from '../api';
-  import { deg, windText, dayHref } from '../format';
+  import { deg, windText, dayAction } from '../format';
   import WeatherIcon from '../WeatherIcon.svelte';
 
-  let { data, opts }: { data: WeatherData; opts: WeatherOptions } = $props();
+  let { data, opts, onpick }: { data: WeatherData; opts: WeatherOptions; onpick: (index: number) => void } = $props();
   const days = $derived(data.daily.slice(0, opts.days));
   const t = $derived(TEXT[opts.lang]);
 </script>
@@ -32,7 +32,8 @@
 
   <div class="days" style:--n={days.length}>
     {#each days as d, i (d.date)}
-      <svelte:element this={dayHref(data, opts, d.date, i) ? 'a' : 'div'} href={dayHref(data, opts, d.date, i)} target="_blank" rel="noreferrer" class="day" class:today={i === 0}>
+      {@const act = dayAction(data, opts, d.date, i, onpick)}
+      <svelte:element this={act.tag} {...act.attrs} class="day" class:today={i === 0}>
         <span class="name">{dayName(d.date, i, opts.lang)}</span>
         <WeatherIcon code={d.code} size={30} animate={opts.animate} />
         <span class="max">{deg(d.max)}</span>
@@ -64,6 +65,8 @@
   .max { font-size: 13px; font-weight: 700; }
   .min { font-size: 12px; color: var(--text-muted); }
   @media (max-width: 460px) { .details { display: none; } }
-  a { color: inherit; text-decoration: none; cursor: pointer; transition: background 0.15s, transform 0.15s; }
-  a:hover { transform: translateY(-2px); background: color-mix(in srgb, var(--text) 6%, transparent); }
+  /* blocos clicáveis: link ou botão sem o visual padrão do navegador */
+  a, button { all: unset; box-sizing: border-box; color: inherit; text-decoration: none; cursor: pointer; transition: background 0.15s, transform 0.15s; }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  a:hover, button:hover { transform: translateY(-2px); background: color-mix(in srgb, var(--text) 6%, transparent); }
 </style>

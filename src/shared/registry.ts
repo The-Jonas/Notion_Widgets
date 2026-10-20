@@ -135,7 +135,7 @@ export const WIDGETS: WidgetInfo[] = [
       { key: 'region', label: 'Show state and country', type: 'toggle', default: '1' },
       { key: 'details', label: 'Feels like, humidity, wind', type: 'toggle', default: '1' },
       { key: 'animate', label: 'Animated icons', type: 'toggle', default: '1' },
-      { key: 'link', label: 'Click on a day opens', type: 'select', default: 'google', choices: ['google', 'windy', 'none'] },
+      { key: 'link', label: 'Click on a day opens', type: 'select', default: 'panel', choices: ['panel', 'google', 'windy', 'none'] },
       { key: 'lang', label: 'Language', type: 'select', default: 'en-US', choices: ['en-US', 'pt-BR'] },
       { key: 'lat', label: 'Latitude (optional)', type: 'text', default: '' },
       { key: 'lon', label: 'Longitude (optional)', type: 'text', default: '' },

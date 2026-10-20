@@ -55,3 +55,21 @@ export function dayHref(data: WeatherData, o: WeatherOptions, date: string, inde
   const query = [pt ? 'clima' : 'weather', data.place, data.region, when].filter(Boolean).join(' ');
   return `https://www.google.com/search?q=${encodeURIComponent(query)}`;
 }
+
+/** Como o bloco de um dia reage ao clique: vira botão que abre o painel do dia,
+    link externo (Google/Windy) ou fica só um bloco comum. */
+export function dayAction(
+  data: WeatherData,
+  o: WeatherOptions,
+  date: string,
+  index: number,
+  onpick: (index: number) => void,
+): { tag: string; attrs: Record<string, unknown> } {
+  if (o.link === 'panel') {
+    return { tag: 'button', attrs: { type: 'button', onclick: () => onpick(index) } };
+  }
+  const href = dayHref(data, o, date, index);
+  return href
+    ? { tag: 'a', attrs: { href, target: '_blank', rel: 'noreferrer' } }
+    : { tag: 'div', attrs: {} };
+}

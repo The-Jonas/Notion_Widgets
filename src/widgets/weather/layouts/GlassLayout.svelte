@@ -2,10 +2,10 @@
      e um painel de vidro fosco por cima com o agora e a previsão. -->
 <script lang="ts">
   import { type WeatherData, type WeatherOptions, describe, dayName, kindOf, TEXT } from '../api';
-  import { deg, dayHref } from '../format';
+  import { deg, dayAction } from '../format';
   import WeatherIcon from '../WeatherIcon.svelte';
 
-  let { data, opts }: { data: WeatherData; opts: WeatherOptions } = $props();
+  let { data, opts, onpick }: { data: WeatherData; opts: WeatherOptions; onpick: (index: number) => void } = $props();
   const days = $derived(data.daily.slice(1, opts.days));
   const t = $derived(TEXT[opts.lang]);
   const today = $derived(data.daily[0]);
@@ -51,7 +51,8 @@
     </div>
     <div class="days">
       {#each days as d, i (d.date)}
-        <svelte:element this={dayHref(data, opts, d.date, i + 1) ? 'a' : 'div'} href={dayHref(data, opts, d.date, i + 1)} target="_blank" rel="noreferrer" class="day">
+        {@const act = dayAction(data, opts, d.date, i + 1, onpick)}
+        <svelte:element this={act.tag} {...act.attrs} class="day">
           <span>{dayName(d.date, i + 1, opts.lang)}</span>
           <WeatherIcon code={d.code} size={26} animate={opts.animate} />
           <b>{deg(d.max)}</b>
@@ -94,6 +95,8 @@
   .day { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11px; }
   .day span { opacity: 0.85; font-weight: 600; }
   .day small { opacity: 0.7; }
-  a { color: inherit; text-decoration: none; cursor: pointer; transition: background 0.15s, transform 0.15s; }
-  a:hover { transform: translateY(-2px); }
+  /* blocos clicáveis: link ou botão sem o visual padrão do navegador */
+  a, button { all: unset; box-sizing: border-box; color: inherit; text-decoration: none; cursor: pointer; transition: background 0.15s, transform 0.15s; }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  a:hover, button:hover { transform: translateY(-2px); }
 </style>

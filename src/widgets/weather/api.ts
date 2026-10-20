@@ -14,6 +14,15 @@ export interface DayForecast {
   uv: number;          // índice UV máximo do dia
   sunrise: string;     // AAAA-MM-DDTHH:MM no horário local da cidade
   sunset: string;
+  hours: HourForecast[]; // previsão hora a hora (24 itens)
+}
+
+export interface HourForecast {
+  time: string;        // AAAA-MM-DDTHH:MM
+  temp: number;
+  rain: number;        // chance de chuva (%)
+  code: number;
+  isDay: boolean;
 }
 
 export interface WeatherData {
@@ -45,7 +54,7 @@ export interface WeatherOptions {
   details: boolean;       // sensação, umidade e vento
   showRegion: boolean;    // mostra estado e país embaixo da cidade
   animate: boolean;       // ícones animados
-  link: 'google' | 'windy' | 'none';  // pra onde vai o clique num dia
+  link: 'panel' | 'google' | 'windy' | 'none';  // o que o clique num dia faz
 }
 
 /** Lê as opções do widget a partir da URL. */
@@ -64,7 +73,7 @@ export function readOptions(): WeatherOptions {
     details: getBool('details', true),
     showRegion: getBool('region', true),
     animate: getBool('animate', true),
-    link: (['google', 'windy', 'none'] as const).find((v) => v === getParam('link', 'google')) ?? 'google',
+    link: (['panel', 'google', 'windy', 'none'] as const).find((v) => v === getParam('link', 'panel')) ?? 'panel',
   };
 }
 
@@ -153,6 +162,19 @@ function demoData(o: WeatherOptions): WeatherData {
       max: [31, 27, 33, 33, 34, 29, 26][i], min: [20, 19, 20, 20, 23, 21, 18][i],
       rain: [0, 80, 10, 20, 15, 70, 90][i], uv: [9, 5, 10, 8, 9, 6, 4][i],
       sunrise: `${date}T05:47`, sunset: `${date}T18:21`,
+      // curva de temperatura de mentira: mínima às 5h, máxima às 15h
+      hours: Array.from({ length: 24 }, (_, h) => {
+        const max = [31, 27, 33, 33, 34, 29, 26][i];
+        const min = [20, 19, 20, 20, 23, 21, 18][i];
+        const wave = (1 + Math.cos((2 * Math.PI * (h - 15)) / 24)) / 2;
+        return {
+          time: `${date}T${String(h).padStart(2, '0')}:00`,
+          temp: min + (max - min) * wave,
+          rain: code >= 61 && h > 12 && h < 20 ? 70 : code >= 61 ? 30 : 0,
+          code: h >= 6 && h <= 18 ? code : code === 0 ? 0 : 3,
+          isDay: h >= 6 && h <= 18,
+        };
+      }),
     };
   });
   return {
@@ -184,14 +206,15 @@ export async function fetchWeather(o: WeatherOptions): Promise<WeatherData> {
   }
 
   const unit = o.fahrenheit ? '&temperature_unit=fahrenheit&wind_speed_unit=mph' : '';
-  const key = `weather:data2:${lat.toFixed(3)},${lon.toFixed(3)}${unit}`;
+  const key = `weather:data3:${lat.toFixed(3)},${lon.toFixed(3)}${unit}`;
   const hit = cached<Omit<WeatherData, 'place' | 'region' | 'lat' | 'lon'>>(key);
   if (hit) return { ...hit, place, region, lat, lon };
 
   const url = 'https://api.open-meteo.com/v1/forecast'
     + `?latitude=${lat}&longitude=${lon}&timezone=auto&forecast_days=7${unit}`
     + '&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,wind_direction_10m,weather_code,is_day'
-    + '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,uv_index_max,sunrise,sunset';
+    + '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,uv_index_max,sunrise,sunset'
+    + '&hourly=temperature_2m,precipitation_probability,weather_code,is_day';
   const res = await safeFetch(url);
   const j = await res.json();
   const data: Omit<WeatherData, 'place' | 'region' | 'lat' | 'lon'> = {
@@ -214,10 +237,28 @@ export async function fetchWeather(o: WeatherOptions): Promise<WeatherData> {
       uv: j.daily.uv_index_max?.[i] ?? 0,
       sunrise: j.daily.sunrise?.[i] ?? '',
       sunset: j.daily.sunset?.[i] ?? '',
+      hours: hoursOf(j.hourly, date),
     })),
   };
   store(key, data);
   return { ...data, place, region, lat, lon };
+}
+
+/** Separa as 24 horas de um dia a partir das listas horárias da Open-Meteo. */
+function hoursOf(h: Record<string, (string | number)[]> | undefined, date: string): HourForecast[] {
+  if (!h?.time) return [];
+  const out: HourForecast[] = [];
+  (h.time as string[]).forEach((time, k) => {
+    if (!time.startsWith(date)) return;
+    out.push({
+      time,
+      temp: Number(h.temperature_2m[k]),
+      rain: Number(h.precipitation_probability?.[k] ?? 0),
+      code: Number(h.weather_code[k]),
+      isDay: Number(h.is_day[k]) === 1,
+    });
+  });
+  return out;
 }
 
 // siglas dos estados brasileiros, pra aceitar "Sobradinho, DF"
