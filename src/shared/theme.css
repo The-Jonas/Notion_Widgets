@@ -46,6 +46,9 @@
 :root[data-accent="pink"]   { --accent: #e255a1; }
 :root[data-accent="yellow"] { --accent: #ffdc49; }
 :root[data-accent="gray"]   { --accent: #979a9b; }
+/* mono: preto, branco e cinza (claro no tema escuro, escuro no tema claro) */
+:root[data-accent="mono"]   { --accent: #e3e3e3; }
+:root[data-theme="light"][data-accent="mono"] { --accent: #37352f; }
 
 * { box-sizing: border-box; }
 

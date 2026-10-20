@@ -39,7 +39,7 @@
   const snakeColor = /^[0-9a-f]{6}$/i.test(customHex)
     ? `#${customHex}`
     : NOTION_COLORS[getParam('snake_color', 'auto')] ?? 'auto';
-  const colors = buildColors(theme, accentHex, dots, snakeColor);
+  const colors = buildColors(theme, accentHex, dots, snakeColor, accentName === 'mono');
 
   // ---- modo gerado no deploy ----
   const base = import.meta.env.DEV ? PUBLIC_BASE : import.meta.env.BASE_URL;

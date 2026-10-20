@@ -24,7 +24,7 @@ export const COMMON_OPTIONS: WidgetOption[] = [
   { key: 'theme', label: 'Theme', type: 'select', default: 'dark', choices: ['dark', 'light'] },
   {
     key: 'accent', label: 'Accent', type: 'select', default: 'blue',
-    choices: ['blue', 'purple', 'green', 'orange', 'red', 'pink', 'yellow', 'gray'],
+    choices: ['blue', 'purple', 'green', 'orange', 'red', 'pink', 'yellow', 'gray', 'mono'],
   },
   { key: 'bg', label: 'Background', type: 'select', default: 'transparent', choices: ['transparent', 'card', 'page'] },
 ];
@@ -139,6 +139,21 @@ export const WIDGETS: WidgetInfo[] = [
       { key: 'lang', label: 'Language', type: 'select', default: 'en-US', choices: ['en-US', 'pt-BR'] },
       { key: 'lat', label: 'Latitude (optional)', type: 'text', default: '' },
       { key: 'lon', label: 'Longitude (optional)', type: 'text', default: '' },
+    ],
+  },
+  {
+    id: 'github',
+    name: '🐙 GitHub',
+    description: 'Your public GitHub: profile card (or neofetch style), repository cards, or commit streak stats. Use user=demo to preview.',
+    height: 220,
+    options: [
+      { key: 'user', label: 'GitHub username', type: 'text', default: '' },
+      { key: 'mode', label: 'Show', type: 'select', default: 'profile', choices: ['profile', 'repos', 'stats'] },
+      { key: 'style', label: 'Profile style', type: 'select', default: 'card', choices: ['card', 'neofetch'] },
+      { key: 'repo', label: 'One repo (owner/name, optional)', type: 'text', default: '' },
+      { key: 'count', label: 'Repos to show', type: 'select', default: '4', choices: ['2', '3', '4', '6', '8'] },
+      { key: 'sort', label: 'Sort repos by', type: 'select', default: 'stars', choices: ['stars', 'updated'] },
+      { key: 'lang', label: 'Language', type: 'select', default: 'en-US', choices: ['en-US', 'pt-BR'] },
     ],
   },
 ];

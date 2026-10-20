@@ -40,11 +40,15 @@ export function buildColors(
   accent: string,
   dots: 'accent' | 'github',
   snake: string | 'auto',
+  mono = false,
 ): SnakeColors {
   const empty = EMPTY[theme];
+  // no mono os tons de cinza param antes do branco, pra cobrinha (branca/preta) se destacar
+  const steps = mono ? [0.22, 0.38, 0.54, 0.7] : [0.38, 0.6, 0.8, 1];
   const levels = dots === 'github'
     ? GITHUB_GREENS[theme]
-    : [0.38, 0.6, 0.8, 1].map((t) => mix(empty, accent, t));
-  const auto = dots === 'github' ? accent : CONTRAST[theme];
+    : steps.map((t) => mix(empty, accent, t));
+  const MONO_SNAKE = { dark: '#ffffff', light: '#000000' };
+  const auto = dots === 'github' ? accent : mono ? MONO_SNAKE[theme] : CONTRAST[theme];
   return { levels: [empty, ...levels], snake: snake === 'auto' ? auto : snake };
 }
