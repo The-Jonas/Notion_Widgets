@@ -8,15 +8,16 @@
 <script lang="ts">
   import type { ContributionGrid } from './contributions';
   import type { SnakePlan, Point } from './solver';
-  import type { SnakeColors, SnakeLook } from './colors';
+  import type { SnakeColors, SnakeLook, BarShape } from './colors';
 
-  let { grid, plan, colors, stepMs, look, bar }: {
+  let { grid, plan, colors, stepMs, look, bar, shape }: {
     grid: ContributionGrid;
     plan: SnakePlan;
     colors: SnakeColors;
     stepMs: number;
     look: SnakeLook;
     bar: 'smooth' | 'steps' | 'none';   // como a barra enche (ou sem barra)
+    shape: BarShape;                     // formato da barra
   } = $props();
 
   let box: HTMLDivElement;
@@ -132,32 +133,131 @@
       frame = requestAnimationFrame(draw);
     };
 
-    /** Barra de progresso embaixo do grid, preenchida do nível 1 ao 4. */
+    /** Barra de progresso embaixo do grid, preenchida do nível 1 ao 4.
+        Formatos (prop "shape"): rounded, square, segments, dots, line, levels. */
     const drawBar = (s: number, ox: number, oy: number, stepF: number, refill: number) => {
-      if (!barLevels.length || bar === 'none') return;
+      const n = barLevels.length;
+      if (!n || bar === 'none') return;
       const bx = ox + s * 0.1;
       const bw = grid.cols * s - s * 0.2;
       const by = oy + (grid.rows + 1) * s + s * 0.35;
       const bh = s * 0.7;
-      const segW = bw / barLevels.length;
-      // na recarga a barra esvazia junto com o grid voltando
-      const visible = refill ? Math.round(barLevels.length * (1 - refill)) : barLevels.length;
-      ctx.save();
-      ctx.beginPath();
-      ctx.roundRect(bx, by, bw, bh, look === 'pixel' ? 0 : bh / 2);
-      ctx.clip();
-      ctx.fillStyle = colors.levels[0];
-      ctx.fillRect(bx, by, bw, bh);
-      for (let j = 0; j < visible; j++) {
-        // smooth: cada pedaço cresce deslizando; steps: acende inteiro de uma vez (igual ao original)
+
+      // quantos quadradinhos já entraram na barra (com fração no modo smooth)
+      let filled = 0;
+      for (let j = 0; j < n; j++) {
         const grow = bar === 'steps'
           ? (stepF >= barTimes[j] ? 1 : 0)
           : Math.min(1, Math.max(0, stepF - barTimes[j] + 1));
         if (grow <= 0) break;
-        ctx.fillStyle = colors.levels[barLevels[j]];
-        ctx.fillRect(bx + j * segW, by, segW * grow + 0.5, bh);
+        filled += grow;
+      }
+      // na recarga a barra esvazia junto com o grid voltando
+      if (refill) filled = n * (1 - refill);
+      const colorAt = (unit: number) => colors.levels[barLevels[Math.min(n - 1, Math.max(0, Math.floor(unit)))]];
+      const shapeNow = shape === 'auto' ? (look === 'pixel' ? 'square' : 'rounded') : shape;
+
+      /** Preenche "parts" pedaços lado a lado; cada um acende conforme a fração já comida. */
+      const drawParts = (parts: number, drawPart: (x: number, w: number, fill: number, color: string, empty: string) => void) => {
+        const partW = bw / parts;
+        for (let k = 0; k < parts; k++) {
+          const u0 = (k / parts) * n;
+          const u1 = ((k + 1) / parts) * n;
+          const fill = Math.min(1, Math.max(0, (filled - u0) / (u1 - u0)));
+          drawPart(bx + k * partW, partW, fill, colorAt((u0 + u1) / 2), colors.levels[0]);
+        }
+      };
+
+      if (shapeNow === 'segments') {
+        // 24 blocos separados, cada um acende por inteiro aos poucos
+        drawParts(24, (x, w, fill, color, empty) => {
+          ctx.fillStyle = empty;
+          ctx.beginPath();
+          ctx.roundRect(x + w * 0.08, by, w * 0.84, bh, bh * 0.25);
+          ctx.fill();
+          if (fill <= 0) return;
+          ctx.save();
+          ctx.globalAlpha = 0.25 + 0.75 * fill;
+          ctx.fillStyle = color;
+          ctx.beginPath();
+          ctx.roundRect(x + w * 0.08, by, w * 0.84, bh, bh * 0.25);
+          ctx.fill();
+          ctx.restore();
+        });
+        return;
+      }
+
+      if (shapeNow === 'dots') {
+        // uma bolinha por semana do grid, acendendo em sequência
+        const r = Math.min(bh * 0.5, bw / grid.cols * 0.32);
+        drawParts(grid.cols, (x, w, fill, color, empty) => {
+          ctx.fillStyle = empty;
+          ctx.beginPath();
+          ctx.arc(x + w / 2, by + bh / 2, r, 0, Math.PI * 2);
+          ctx.fill();
+          if (fill <= 0) return;
+          ctx.fillStyle = color;
+          ctx.beginPath();
+          ctx.arc(x + w / 2, by + bh / 2, r * (0.4 + 0.6 * fill), 0, Math.PI * 2);
+          ctx.fill();
+        });
+        return;
+      }
+
+      if (shapeNow === 'levels') {
+        // 4 barrinhas, uma por nível, com largura proporcional à quantidade de cada um
+        const counts = [1, 2, 3, 4].map((l) => barLevels.filter((v) => v === l).length);
+        const gap = s * 0.25;
+        const usable = bw - gap * (counts.filter((c) => c).length - 1);
+        let x = bx;
+        let before = 0;
+        counts.forEach((count, idx) => {
+          if (!count) return;
+          const w = (count / n) * usable;
+          const fill = Math.min(1, Math.max(0, (filled - before) / count));
+          ctx.fillStyle = colors.levels[0];
+          ctx.beginPath();
+          ctx.roundRect(x, by, w, bh, bh / 2);
+          ctx.fill();
+          if (fill > 0) {
+            ctx.fillStyle = colors.levels[idx + 1];
+            ctx.beginPath();
+            ctx.roundRect(x, by, Math.max(bh, w * fill), bh, bh / 2);
+            ctx.fill();
+          }
+          x += w + gap;
+          before += count;
+        });
+        return;
+      }
+
+      // rounded, square e line: uma barra contínua
+      const lineH = shapeNow === 'line' ? Math.max(2, s * 0.18) : bh;
+      const ly = by + (bh - lineH) / 2;
+      const radius = shapeNow === 'square' ? 0 : lineH / 2;
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect(bx, ly, bw, lineH, radius);
+      ctx.clip();
+      ctx.fillStyle = colors.levels[0];
+      ctx.fillRect(bx, ly, bw, lineH);
+      const unitW = bw / n;
+      for (let u = 0; u < Math.ceil(filled); u++) {
+        ctx.fillStyle = colorAt(u);
+        ctx.fillRect(bx + u * unitW, ly, unitW * Math.min(1, filled - u) + 0.5, lineH);
       }
       ctx.restore();
+      if (shapeNow === 'line' && filled > 0) {
+        // ponto brilhante na ponta da linha
+        ctx.save();
+        ctx.fillStyle = colorAt(filled - 1);
+        ctx.shadowColor = ctx.fillStyle;
+        ctx.shadowBlur = s * 0.6;
+        ctx.beginPath();
+        ctx.arc(bx + (filled / n) * bw, by + bh / 2, s * 0.22, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
     };
 
     /** Desenha a cobrinha no visual escolhido. */

@@ -6,7 +6,7 @@
   import { PUBLIC_BASE } from '../../shared/registry';
   import { fetchGrid, type ContributionGrid } from './contributions';
   import { planSnake, type SnakePlan } from './solver';
-  import { buildColors, SNAKE_LOOKS, type SnakeLook } from './colors';
+  import { buildColors, SNAKE_LOOKS, BAR_SHAPES, type SnakeLook, type BarShape } from './colors';
   import SnakeCanvas from './SnakeCanvas.svelte';
 
   const theme = getParam('theme', 'dark') === 'light' ? 'light' : 'dark';
@@ -23,6 +23,8 @@
   const lookParam = getParam('style', 'classic') as SnakeLook;
   const barParam = getParam('bar', 'smooth');
   const bar = barParam === 'steps' || barParam === 'none' ? barParam : 'smooth';
+  const shapeParam = getParam('bar_shape', 'auto') as BarShape;
+  const shape: BarShape = BAR_SHAPES.includes(shapeParam) ? shapeParam : 'auto';
   const look: SnakeLook = SNAKE_LOOKS.includes(lookParam) ? lookParam : 'classic';
 
   // cor de destaque já aplicada pelo tema (variável CSS --accent)
@@ -32,7 +34,11 @@
     blue: '#529cca', purple: '#9a6dd7', green: '#4dab9a', orange: '#ffa344',
     red: '#ff7369', pink: '#e255a1', yellow: '#ffdc49', gray: '#979a9b',
   };
-  const snakeColor = NOTION_COLORS[getParam('snake_color', 'auto')] ?? 'auto';
+  // cor própria em hex (ex.: ff6b6b ou #ff6b6b) tem prioridade sobre a lista
+  const customHex = getParam('snake_hex', '').trim().replace(/^#/, '');
+  const snakeColor = /^[0-9a-f]{6}$/i.test(customHex)
+    ? `#${customHex}`
+    : NOTION_COLORS[getParam('snake_color', 'auto')] ?? 'auto';
   const colors = buildColors(theme, accentHex, dots, snakeColor);
 
   // ---- modo gerado no deploy ----
@@ -78,7 +84,7 @@
   {:else if error}
     <p class="note">🐍 {error}</p>
   {:else if grid && plan}
-    <div class="stage"><SnakeCanvas {grid} {plan} {colors} {stepMs} {look} {bar} /></div>
+    <div class="stage"><SnakeCanvas {grid} {plan} {colors} {stepMs} {look} {bar} {shape} /></div>
     {#if showStats}
       <a class="stats" href="https://github.com/{user}" target="_blank" rel="noreferrer">
         <span>{statsText(grid.total)}</span><span class="handle">@{user}</span>

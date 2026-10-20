@@ -4,6 +4,10 @@
 export type SnakeLook = 'classic' | 'smooth' | 'neon' | 'pixel';
 export const SNAKE_LOOKS: SnakeLook[] = ['classic', 'smooth', 'neon', 'pixel'];
 
+// formatos da barra de progresso ("auto" = quadrada no pixel, arredondada no resto)
+export type BarShape = 'auto' | 'rounded' | 'square' | 'segments' | 'dots' | 'line' | 'levels';
+export const BAR_SHAPES: BarShape[] = ['auto', 'rounded', 'square', 'segments', 'dots', 'line', 'levels'];
+
 export interface SnakeColors {
   levels: string[];   // 5 cores: vazio + níveis 1 a 4
   snake: string;
