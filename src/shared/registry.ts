@@ -99,10 +99,15 @@ export const WIDGETS: WidgetInfo[] = [
   {
     id: 'snake',
     name: '🐍 GitHub Snake',
-    description: 'The snake eating your GitHub contribution graph. Regenerated every day by the deploy workflow for the repo owner.',
+    description: 'A snake eating anyone\'s GitHub contribution graph, live in the browser. Set your username (or "demo"). "generated" shows the SVG built on deploy for the repo owner.',
     height: 200,
     options: [
+      { key: 'user', label: 'GitHub username', type: 'text', default: '' },
       { key: 'dots', label: 'Squares', type: 'select', default: 'accent', choices: ['accent', 'github'] },
+      { key: 'speed', label: 'Speed', type: 'select', default: 'normal', choices: ['slow', 'normal', 'fast'] },
+      { key: 'stats', label: 'Show stats line', type: 'toggle', default: '1' },
+      { key: 'lang', label: 'Language', type: 'select', default: 'en-US', choices: ['en-US', 'pt-BR'] },
+      { key: 'source', label: 'Source', type: 'select', default: 'live', choices: ['live', 'generated'] },
     ],
   },
 ];
