@@ -7,6 +7,11 @@
   import MinimalLayout from './layouts/MinimalLayout.svelte';
   import StripLayout from './layouts/StripLayout.svelte';
   import ListLayout from './layouts/ListLayout.svelte';
+  import GlassLayout from './layouts/GlassLayout.svelte';
+  import TerminalLayout from './layouts/TerminalLayout.svelte';
+  import ChartLayout from './layouts/ChartLayout.svelte';
+  import SunLayout from './layouts/SunLayout.svelte';
+  import BentoLayout from './layouts/BentoLayout.svelte';
 
   const style = getParam('style', 'classic');
   const opts = readOptions();
@@ -44,6 +49,16 @@
     <StripLayout {data} {opts} />
   {:else if style === 'list'}
     <ListLayout {data} {opts} />
+  {:else if style === 'glass'}
+    <GlassLayout {data} {opts} />
+  {:else if style === 'terminal'}
+    <TerminalLayout {data} {opts} />
+  {:else if style === 'chart'}
+    <ChartLayout {data} {opts} />
+  {:else if style === 'sun'}
+    <SunLayout {data} {opts} />
+  {:else if style === 'bento'}
+    <BentoLayout {data} {opts} />
   {:else}
     <ClassicLayout {data} {opts} />
   {/if}

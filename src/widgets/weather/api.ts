@@ -11,6 +11,9 @@ export interface DayForecast {
   max: number;
   min: number;
   rain: number;        // chance de chuva (%)
+  uv: number;          // índice UV máximo do dia
+  sunrise: string;     // AAAA-MM-DDTHH:MM no horário local da cidade
+  sunset: string;
 }
 
 export interface WeatherData {
@@ -21,8 +24,10 @@ export interface WeatherData {
     feels: number;
     humidity: number;
     wind: number;
+    windDir: number;   // de onde o vento vem, em graus (0 = norte)
     code: number;
     isDay: boolean;
+    time: string;      // hora local da cidade (AAAA-MM-DDTHH:MM)
   };
   daily: DayForecast[];
 }
@@ -90,9 +95,15 @@ export function describe(code: number, lang: Lang): string {
 }
 
 /** Textos fixos da interface. */
-export const TEXT: Record<Lang, { today: string; feels: string; humidity: string; wind: string; hi: string; lo: string }> = {
-  'en-US': { today: 'Today', feels: 'Feels', humidity: 'Humidity', wind: 'Wind', hi: 'H', lo: 'L' },
-  'pt-BR': { today: 'Hoje', feels: 'Sensação', humidity: 'Umidade', wind: 'Vento', hi: 'Máx', lo: 'Mín' },
+export const TEXT: Record<Lang, Record<'today' | 'feels' | 'humidity' | 'wind' | 'hi' | 'lo' | 'uv' | 'rain' | 'sunrise' | 'sunset' | 'daylightLeft' | 'sunriseIn', string>> = {
+  'en-US': {
+    today: 'Today', feels: 'Feels', humidity: 'Humidity', wind: 'Wind', hi: 'H', lo: 'L', uv: 'UV index',
+    rain: 'Rain', sunrise: 'Sunrise', sunset: 'Sunset', daylightLeft: 'of daylight left', sunriseIn: 'Sunrise in',
+  },
+  'pt-BR': {
+    today: 'Hoje', feels: 'Sensação', humidity: 'Umidade', wind: 'Vento', hi: 'Máx', lo: 'Mín', uv: 'Índice UV',
+    rain: 'Chuva', sunrise: 'Nascer', sunset: 'Pôr do sol', daylightLeft: 'de sol restantes', sunriseIn: 'Sol nasce em',
+  },
 };
 
 /** Nome curto do dia da semana ("Tue", "Ter") ou "Today"/"Hoje" para o primeiro. */
@@ -133,12 +144,17 @@ function demoData(o: WeatherOptions): WeatherData {
   const daily = codes.map((code, i) => {
     const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i);
     const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    return { date, code, max: [31, 27, 33, 33, 34, 29, 26][i], min: [20, 19, 20, 20, 23, 21, 18][i], rain: [0, 80, 10, 20, 15, 70, 90][i] };
+    return {
+      date, code,
+      max: [31, 27, 33, 33, 34, 29, 26][i], min: [20, 19, 20, 20, 23, 21, 18][i],
+      rain: [0, 80, 10, 20, 15, 70, 90][i], uv: [9, 5, 10, 8, 9, 6, 4][i],
+      sunrise: `${date}T05:47`, sunset: `${date}T18:21`,
+    };
   });
   return {
     place: o.label || 'Sobradinho',
     region: o.lang === 'pt-BR' ? 'Distrito Federal, Brasil' : 'Federal District, Brazil',
-    current: { temp: 29, feels: 31, humidity: 42, wind: 11, code: 0, isDay: true },
+    current: { temp: 29, feels: 31, humidity: 42, wind: 11, windDir: 120, code: 0, isDay: true, time: `${daily[0].date}T14:15` },
     daily,
   };
 }
@@ -162,14 +178,14 @@ export async function fetchWeather(o: WeatherOptions): Promise<WeatherData> {
   }
 
   const unit = o.fahrenheit ? '&temperature_unit=fahrenheit&wind_speed_unit=mph' : '';
-  const key = `weather:data:${lat.toFixed(3)},${lon.toFixed(3)}${unit}`;
+  const key = `weather:data2:${lat.toFixed(3)},${lon.toFixed(3)}${unit}`;
   const hit = cached<Omit<WeatherData, 'place' | 'region'>>(key);
   if (hit) return { ...hit, place, region };
 
   const url = 'https://api.open-meteo.com/v1/forecast'
     + `?latitude=${lat}&longitude=${lon}&timezone=auto&forecast_days=7${unit}`
-    + '&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code,is_day'
-    + '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max';
+    + '&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,wind_direction_10m,weather_code,is_day'
+    + '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,uv_index_max,sunrise,sunset';
   const res = await safeFetch(url);
   const j = await res.json();
   const data: Omit<WeatherData, 'place' | 'region'> = {
@@ -178,8 +194,10 @@ export async function fetchWeather(o: WeatherOptions): Promise<WeatherData> {
       feels: j.current.apparent_temperature,
       humidity: j.current.relative_humidity_2m,
       wind: j.current.wind_speed_10m,
+      windDir: j.current.wind_direction_10m ?? 0,
       code: j.current.weather_code,
       isDay: j.current.is_day === 1,
+      time: j.current.time,
     },
     daily: (j.daily.time as string[]).map((date, i) => ({
       date,
@@ -187,6 +205,9 @@ export async function fetchWeather(o: WeatherOptions): Promise<WeatherData> {
       max: j.daily.temperature_2m_max[i],
       min: j.daily.temperature_2m_min[i],
       rain: j.daily.precipitation_probability_max?.[i] ?? 0,
+      uv: j.daily.uv_index_max?.[i] ?? 0,
+      sunrise: j.daily.sunrise?.[i] ?? '',
+      sunset: j.daily.sunset?.[i] ?? '',
     })),
   };
   store(key, data);
