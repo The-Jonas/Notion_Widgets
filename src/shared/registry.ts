@@ -33,11 +33,14 @@ export const WIDGETS: WidgetInfo[] = [
   {
     id: 'clock',
     name: '🕐 Clock',
-    description: 'Clock and date in the template style.',
-    height: 140,
+    description: 'Seven clock faces: orbit rings, dots, minimal, stacked type, analog, hybrid and digital.',
+    height: 220,
     options: [
+      { key: 'style', label: 'Style', type: 'select', default: 'orbit', choices: ['orbit', 'dots', 'minimal', 'stack', 'analog', 'hybrid', 'digital'] },
       { key: 'format', label: 'Format', type: 'select', default: '24', choices: ['24', '12'] },
-      { key: 'seconds', label: 'Show seconds', type: 'toggle', default: '0' },
+      { key: 'seconds', label: 'Show seconds', type: 'toggle', default: '1' },
+      { key: 'sweep', label: 'Smooth second hand', type: 'toggle', default: '1' },
+      { key: 'numerals', label: 'Numerals 12/3/6/9', type: 'toggle', default: '0' },
       { key: 'date', label: 'Show date', type: 'toggle', default: '1' },
       { key: 'lang', label: 'Date language', type: 'select', default: 'en-US', choices: ['en-US', 'pt-BR'] },
     ],
