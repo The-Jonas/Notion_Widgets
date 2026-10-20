@@ -27,6 +27,9 @@
   const todayLeft = $derived(nexts.filter((u) => u.daysAhead === 0));
   const curProgress = $derived(cur ? (nowMin - cur.start) / Math.max(1, cur.end - cur.start) : 0);
 
+  /** Deixa a primeira letra maiúscula (pra frases que começam uma linha no cartão). */
+  const cap = (text: string): string => (text ? text[0].toLocaleUpperCase(locale) + text.slice(1) : text);
+
   const T = pt
     ? { now: 'agora', next: 'próxima', free: 'livre', freeNow: 'Sem aula agora', freeUntil: 'livre até', endsIn: 'termina em', startsIn: 'começa em', today: 'ainda hoje', none: 'nenhuma aula na grade', doneToday: 'acabaram as aulas de hoje', tomorrow: 'amanhã', setup: 'Escreva sua grade no parâmetro classes (veja o README). Mostrando um exemplo.' }
     : { now: 'now', next: 'next', free: 'free', freeNow: 'No class now', freeUntil: 'free until', endsIn: 'ends in', startsIn: 'starts in', today: 'later today', none: 'no classes in the schedule', doneToday: 'no more classes today', tomorrow: 'tomorrow', setup: 'Write your timetable in the classes option (see README). Showing an example.' };
@@ -120,12 +123,12 @@
           <b class="title">{cur.name}</b>
           <span class="meta">{clock(cur.start)}–{clock(cur.end)}{showRoom && cur.room ? ` · ${cur.room}` : ''}</span>
           <div class="pbar"><i style:width="{curProgress * 100}%"></i></div>
-          <span class="meta strong">{T.endsIn} {span(cur.end - nowMin)}</span>
+          <span class="meta strong">{cap(T.endsIn)} {span(cur.end - nowMin)}</span>
         {:else if next}
           <b class="title">{T.freeNow}</b>
-          <span class="meta">{todayLeft.length ? `${T.freeUntil} ${clock(next.slot.start)} · ${span(next.startsIn)}` : T.doneToday}</span>
+          <span class="meta">{todayLeft.length ? `${cap(T.freeUntil)} ${clock(next.slot.start)} · ${span(next.startsIn)}` : cap(T.doneToday)}</span>
         {:else}
-          <b class="title">{T.free}</b>
+          <b class="title">{cap(T.free)}</b>
         {/if}
       </section>
 
@@ -136,8 +139,8 @@
             <div class="item first" style:--c={color(next.slot.name)}>
               <span class="tag">{T.next}</span>
               <b>{next.slot.name}</b>
-              <span class="meta">{when(next.daysAhead, next.slot.day) ? `${when(next.daysAhead, next.slot.day)} · ` : ''}{clock(next.slot.start)}{showRoom && next.slot.room ? ` · ${next.slot.room}` : ''}</span>
-              <span class="meta strong">{T.startsIn} {span(next.startsIn)}</span>
+              <span class="meta">{when(next.daysAhead, next.slot.day) ? `${cap(when(next.daysAhead, next.slot.day))} · ` : ''}{clock(next.slot.start)}{showRoom && next.slot.room ? ` · ${next.slot.room}` : ''}</span>
+              <span class="meta strong">{cap(T.startsIn)} {span(next.startsIn)}</span>
             </div>
           {/if}
           {#each (todayLeft.length > 1 ? todayLeft.slice(1, 4) : []) as u (u.slot.start + u.slot.name)}
