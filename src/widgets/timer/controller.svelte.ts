@@ -8,6 +8,7 @@ import {
 } from './engine';
 import { unlockAudio, playSound, playTick, askNotificationPermission, notify } from './alerts';
 import { getNumber, getBool, getParam } from '../../shared/params';
+import { addFocus } from '../../shared/focusLog';
 
 /** Hash curto de um texto (djb2), usado pra dar um "endereço" a cada timer. */
 function shortHash(text: string): string {
@@ -220,6 +221,8 @@ export class TimerController {
     const base = saved.date === todayKey() ? saved : { date: todayKey(), sessions: 0, minutes: 0 };
     this.stats = { date: base.date, sessions: base.sessions + 1, minutes: base.minutes + minutes };
     saveJSON(STATS_KEY, this.stats);
+    // histórico por dia, lido pelo mapa de foco
+    addFocus(minutes);
   }
 
   /** Troca entre FOCUS e GAME, mantendo o estado salvo de cada um. */

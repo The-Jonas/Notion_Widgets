@@ -166,6 +166,50 @@ export const WIDGETS: WidgetInfo[] = [
       { key: 'lang', label: 'Language', type: 'select', default: 'en-US', choices: ['en-US', 'pt-BR'] },
     ],
   },
+  {
+    id: 'typing',
+    name: '⌨️ Typing Trainer',
+    description: 'Learn to type with 10 fingers: row lessons, real words (EN/PT), on-screen keyboard showing which finger to use, WPM/accuracy history and your most missed keys.',
+    height: 460,
+    options: [
+      { key: 'mode', label: 'Start with', type: 'select', default: 'words', choices: ['words', 'home', 'top', 'bottom', 'numbers'] },
+      { key: 'limit', label: 'Test length', type: 'select', default: '25w', choices: ['10w', '25w', '50w', '15s', '30s', '60s'] },
+      { key: 'words', label: 'Word language', type: 'select', default: 'en', choices: ['en', 'pt', 'mix'] },
+      { key: 'accents', label: 'Accents (á, ç, ã...)', type: 'toggle', default: '0' },
+      { key: 'layout', label: 'Keyboard layout', type: 'select', default: 'qwerty', choices: ['qwerty', 'abnt2'] },
+      { key: 'keyboard', label: 'Show keyboard', type: 'toggle', default: '1' },
+      { key: 'goal', label: 'WPM goal', type: 'number', default: '40' },
+      { key: 'style', label: 'Style', type: 'select', default: 'clean', choices: ['clean', 'terminal'] },
+      { key: 'lang', label: 'Language', type: 'select', default: 'en-US', choices: ['en-US', 'pt-BR'] },
+    ],
+  },
+  {
+    id: 'focus',
+    name: '🍅 Focus Map',
+    description: 'Your pomodoro minutes per day as a GitHub-style grid, bars or a terminal sparkline, with streak and totals. Fed by the Pomodoro widget on the same device.',
+    height: 230,
+    options: [
+      { key: 'style', label: 'Style', type: 'select', default: 'grid', choices: ['grid', 'bars', 'terminal'] },
+      { key: 'weeks', label: 'Weeks (grid)', type: 'select', default: '26', choices: ['12', '26', '52'] },
+      { key: 'days', label: 'Days (bars)', type: 'select', default: '14', choices: ['7', '14', '30'] },
+      { key: 'goal', label: 'Daily goal (min)', type: 'number', default: '50' },
+      { key: 'stats', label: 'Show stats', type: 'toggle', default: '1' },
+      { key: 'demo', label: 'Demo data', type: 'toggle', default: '0' },
+      { key: 'lang', label: 'Language', type: 'select', default: 'en-US', choices: ['en-US', 'pt-BR'] },
+    ],
+  },
+  {
+    id: 'classes',
+    name: '🎓 Classes Now/Next',
+    description: 'Your weekly timetable in the link: what is on now (with time left), what is next, and a week view. Format: "mon,wed 08:00-09:50 Calculus @ Room 12; tue 14:00-15:50 Physics".',
+    height: 220,
+    options: [
+      { key: 'classes', label: 'Timetable (day time-time Name @ Room; ...)', type: 'text', default: '' },
+      { key: 'style', label: 'Style', type: 'select', default: 'card', choices: ['card', 'week', 'terminal', 'minimal'] },
+      { key: 'room', label: 'Show room', type: 'toggle', default: '1' },
+      { key: 'lang', label: 'Language', type: 'select', default: 'en-US', choices: ['en-US', 'pt-BR'] },
+    ],
+  },
 ];
 
 /** Endereço público do site no GitHub Pages (usado na URL copiada). */
