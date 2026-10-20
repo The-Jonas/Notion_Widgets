@@ -1,0 +1,59 @@
+/* ==========================================================
+   Tema compartilhado por todos os widgets.
+   Cores copiadas da paleta do Notion pra combinar com o template.
+   O tema e o destaque vêm da URL (?theme=dark&accent=blue)
+   e são aplicados como atributos no <html> por applyTheme().
+   ========================================================== */
+
+:root {
+  /* fontes iguais às do Notion */
+  --font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+
+  --radius: 6px;
+  --gap: 12px;
+
+  /* modo escuro (padrão) */
+  --bg-page: #191919;
+  --bg-card: #202020;
+  --bg-hover: #2c2c2c;
+  --border: #2f2f2f;
+  --text: #d4d4d4;
+  --text-muted: #9b9b9b;
+  --accent: #529cca;
+}
+
+:root[data-theme="light"] {
+  --bg-page: #ffffff;
+  --bg-card: #f7f7f5;
+  --bg-hover: #efefed;
+  --border: #e9e9e7;
+  --text: #37352f;
+  --text-muted: #787774;
+}
+
+/* cores de destaque da paleta do Notion */
+:root[data-accent="blue"]   { --accent: #529cca; }
+:root[data-accent="purple"] { --accent: #9a6dd7; }
+:root[data-accent="green"]  { --accent: #4dab9a; }
+:root[data-accent="orange"] { --accent: #ffa344; }
+:root[data-accent="red"]    { --accent: #ff7369; }
+:root[data-accent="pink"]   { --accent: #e255a1; }
+:root[data-accent="yellow"] { --accent: #ffdc49; }
+:root[data-accent="gray"]   { --accent: #979a9b; }
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  font-family: var(--font-sans);
+  color: var(--text);
+  /* fundo transparente por padrão: dentro do embed o widget herda a cor da página */
+  background: transparent;
+}
+
+:root[data-bg="page"] body { background: var(--bg-page); }
+:root[data-bg="card"] body { background: var(--bg-card); }
+
+#app { height: 100%; }
