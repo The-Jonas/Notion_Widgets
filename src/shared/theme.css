@@ -21,9 +21,14 @@
   --text: #d4d4d4;
   --text-muted: #9b9b9b;
   --accent: #529cca;
+
+  /* avisa o navegador que a página é escura: sem isso, dentro do iframe do
+     Notion em modo escuro o Chromium pinta um fundo branco atrás do widget */
+  color-scheme: dark;
 }
 
 :root[data-theme="light"] {
+  color-scheme: light;
   --bg-page: #ffffff;
   --bg-card: #f7f7f5;
   --bg-hover: #efefed;
