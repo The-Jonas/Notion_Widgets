@@ -21,7 +21,7 @@
     <WeatherIcon code={data.current.code} isDay={data.current.isDay} size={34} animate={opts.animate} />
     <span class="temp">{deg(data.current.temp)}</span>
     <span class="desc">{describe(data.current.code, opts.lang)}</span>
-    <span class="city">{data.place}</span>
+    <span class="city">{data.place}{#if opts.showRegion && data.region}<small>{data.region}</small>{/if}</span>
   </header>
   {#each days as d, i (d.date)}
     <div class="row">
@@ -47,6 +47,8 @@
   .temp { font-size: 26px; font-weight: 700; }
   .desc { font-size: 13px; }
   .city { margin-left: auto; font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.12em; }
+  .city { display: flex; flex-direction: column; align-items: flex-end; }
+  .city small { font-size: 10px; letter-spacing: 0; text-transform: none; }
   .row {
     display: grid; grid-template-columns: 52px 48px 34px 1fr 34px; align-items: center; gap: 8px;
     padding: 4px 0; border-top: 1px solid var(--border);

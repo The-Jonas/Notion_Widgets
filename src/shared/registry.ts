@@ -127,11 +127,12 @@ export const WIDGETS: WidgetInfo[] = [
     description: 'Current weather and the next days for any city (Open-Meteo, no API key). Five layouts: classic, hero, minimal, strip and list. Use city=demo to preview offline.',
     height: 240,
     options: [
-      { key: 'city', label: 'City', type: 'text', default: 'Brasília' },
+      { key: 'city', label: 'City (e.g. "Sobradinho, DF")', type: 'text', default: 'Brasília' },
       { key: 'label', label: 'Name shown (optional)', type: 'text', default: '' },
       { key: 'style', label: 'Style', type: 'select', default: 'classic', choices: ['classic', 'hero', 'minimal', 'strip', 'list'] },
       { key: 'units', label: 'Units', type: 'select', default: 'c', choices: ['c', 'f'] },
       { key: 'days', label: 'Days', type: 'select', default: '7', choices: ['3', '5', '7'] },
+      { key: 'region', label: 'Show state and country', type: 'toggle', default: '1' },
       { key: 'details', label: 'Feels like, humidity, wind', type: 'toggle', default: '1' },
       { key: 'animate', label: 'Animated icons', type: 'toggle', default: '1' },
       { key: 'lang', label: 'Language', type: 'select', default: 'en-US', choices: ['en-US', 'pt-BR'] },

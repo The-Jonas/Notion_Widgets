@@ -13,7 +13,7 @@
   <div class="text">
     <span class="temp">{deg(data.current.temp)}</span>
     <span class="line">{describe(data.current.code, opts.lang)} · ↑{deg(today.max)} ↓{deg(today.min)}</span>
-    <span class="city">{data.place}</span>
+    <span class="city">{data.place}{opts.showRegion && data.region ? `  ·  ${data.region}` : ''}</span>
   </div>
 </div>
 
@@ -22,5 +22,5 @@
   .text { display: flex; flex-direction: column; }
   .temp { font-size: 52px; font-weight: 300; line-height: 1; letter-spacing: -0.04em; }
   .line { font-size: 13px; margin-top: 4px; }
-  .city { font-size: 11px; color: var(--text-muted); letter-spacing: 0.14em; text-transform: uppercase; margin-top: 2px; }
+  .city { white-space: pre; font-size: 11px; color: var(--text-muted); letter-spacing: 0.14em; text-transform: uppercase; margin-top: 2px; }
 </style>

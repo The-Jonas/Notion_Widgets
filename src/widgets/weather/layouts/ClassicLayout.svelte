@@ -14,6 +14,7 @@
   <header>
     <div class="place">
       <span class="city">{data.place}</span>
+      {#if opts.showRegion && data.region}<span class="region">{data.region}</span>{/if}
       <span class="sub">{describe(data.current.code, opts.lang)}</span>
     </div>
     <div class="now">
@@ -46,7 +47,8 @@
   header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 6px; }
   .place { display: flex; flex-direction: column; min-width: 0; }
   .city { font-size: 15px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
-  .sub { font-size: 12px; color: var(--text-muted); }
+  .region { font-size: 11px; color: var(--text-muted); }
+  .sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
   .now { display: flex; align-items: center; gap: 10px; }
   .temp { font-size: 38px; font-weight: 700; letter-spacing: -0.03em; line-height: 1; }
   .details { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; font-size: 12px; font-weight: 600; text-align: right; }

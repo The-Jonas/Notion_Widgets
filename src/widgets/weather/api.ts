@@ -15,6 +15,7 @@ export interface DayForecast {
 
 export interface WeatherData {
   place: string;
+  region: string;      // "Estado, País" da cidade encontrada (vazio com lat/lon manuais)
   current: {
     temp: number;
     feels: number;
@@ -35,6 +36,7 @@ export interface WeatherOptions {
   days: number;
   lang: Lang;
   details: boolean;       // sensação, umidade e vento
+  showRegion: boolean;    // mostra estado e país embaixo da cidade
   animate: boolean;       // ícones animados
 }
 
@@ -52,6 +54,7 @@ export function readOptions(): WeatherOptions {
     days: Math.min(7, Math.max(3, Math.round(getNumber('days', 7)))),
     lang: getParam('lang', 'en-US') === 'pt-BR' ? 'pt-BR' : 'en-US',
     details: getBool('details', true),
+    showRegion: getBool('region', true),
     animate: getBool('animate', true),
   };
 }
@@ -134,6 +137,7 @@ function demoData(o: WeatherOptions): WeatherData {
   });
   return {
     place: o.label || 'Sobradinho',
+    region: o.lang === 'pt-BR' ? 'Distrito Federal, Brasil' : 'Federal District, Brazil',
     current: { temp: 29, feels: 31, humidity: 42, wind: 11, code: 0, isDay: true },
     daily,
   };
@@ -146,29 +150,21 @@ export async function fetchWeather(o: WeatherOptions): Promise<WeatherData> {
   let lat = o.lat;
   let lon = o.lon;
   let place = o.label || o.city;
+  let region = '';
 
   // sem coordenadas: descobre pela cidade (geocoding da própria Open-Meteo)
   if (lat === null || lon === null) {
-    const geoKey = `weather:geo:${o.city.toLowerCase()}`;
-    let geo = cached<{ lat: number; lon: number; name: string }>(geoKey);
-    if (!geo) {
-      const url = `https://geocoding-api.open-meteo.com/v1/search?count=1&language=${o.lang.slice(0, 2)}&name=${encodeURIComponent(o.city)}`;
-      const res = await safeFetch(url);
-      const json = (await res.json()) as { results?: { latitude: number; longitude: number; name: string }[] };
-      const hit = json.results?.[0];
-      if (!hit) throw new Error(`City "${o.city}" not found. Try another spelling or set lat/lon.`);
-      geo = { lat: hit.latitude, lon: hit.longitude, name: hit.name };
-      store(geoKey, geo);
-    }
+    const geo = await geocode(o);
     lat = geo.lat;
     lon = geo.lon;
     place = o.label || geo.name;
+    region = geo.region;
   }
 
   const unit = o.fahrenheit ? '&temperature_unit=fahrenheit&wind_speed_unit=mph' : '';
   const key = `weather:data:${lat.toFixed(3)},${lon.toFixed(3)}${unit}`;
-  const hit = cached<Omit<WeatherData, 'place'>>(key);
-  if (hit) return { ...hit, place };
+  const hit = cached<Omit<WeatherData, 'place' | 'region'>>(key);
+  if (hit) return { ...hit, place, region };
 
   const url = 'https://api.open-meteo.com/v1/forecast'
     + `?latitude=${lat}&longitude=${lon}&timezone=auto&forecast_days=7${unit}`
@@ -176,7 +172,7 @@ export async function fetchWeather(o: WeatherOptions): Promise<WeatherData> {
     + '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max';
   const res = await safeFetch(url);
   const j = await res.json();
-  const data: Omit<WeatherData, 'place'> = {
+  const data: Omit<WeatherData, 'place' | 'region'> = {
     current: {
       temp: j.current.temperature_2m,
       feels: j.current.apparent_temperature,
@@ -194,7 +190,70 @@ export async function fetchWeather(o: WeatherOptions): Promise<WeatherData> {
     })),
   };
   store(key, data);
-  return { ...data, place };
+  return { ...data, place, region };
+}
+
+// siglas dos estados brasileiros, pra aceitar "Sobradinho, DF"
+const UF: Record<string, string[]> = {
+  ac: ['acre'], al: ['alagoas'], ap: ['amapa'], am: ['amazonas'], ba: ['bahia'], ce: ['ceara'],
+  df: ['distrito federal', 'federal district'], es: ['espirito santo'], go: ['goias'], ma: ['maranhao'],
+  mt: ['mato grosso'], ms: ['mato grosso do sul'], mg: ['minas gerais'], pa: ['para'], pb: ['paraiba'],
+  pr: ['parana'], pe: ['pernambuco'], pi: ['piaui'], rj: ['rio de janeiro'], rn: ['rio grande do norte'],
+  rs: ['rio grande do sul'], ro: ['rondonia'], rr: ['roraima'], sc: ['santa catarina'], sp: ['sao paulo'],
+  se: ['sergipe'], to: ['tocantins'],
+};
+
+/** Deixa o texto comparável: minúsculo e sem acentos. */
+function norm(text: string | undefined): string {
+  return (text ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+}
+
+interface GeoHit {
+  latitude: number;
+  longitude: number;
+  name: string;
+  admin1?: string;
+  admin2?: string;
+  country?: string;
+  country_code?: string;
+}
+
+/** Diz se um resultado bate com um qualificador ("DF", "Bahia", "Brasil", "BR"...). */
+function matches(hit: GeoHit, qualifier: string): boolean {
+  const q = norm(qualifier);
+  const fields = [hit.admin1, hit.admin2, hit.country, hit.country_code].map(norm);
+  if (fields.some((f) => f === q || (q.length > 3 && f.includes(q)))) return true;
+  // sigla de estado: compara com o nome por extenso, com e sem a parte em inglês ("State of")
+  const full = UF[q];
+  return !!full && full.some((name) => norm(hit.admin1).replace(/^state of /, '').startsWith(name));
+}
+
+/** "Estado, País" de um resultado do geocoding. */
+function regionOf(hit: GeoHit): string {
+  return [hit.admin1, hit.country].filter(Boolean).join(', ');
+}
+
+/** Acha a cidade. Aceita qualificadores depois de vírgula: "Sobradinho, DF" ou "Paris, US". */
+async function geocode(o: WeatherOptions): Promise<{ lat: number; lon: number; name: string; region: string }> {
+  const key = `weather:geo2:${o.lang}:${norm(o.city)}`;
+  const saved = cached<{ lat: number; lon: number; name: string; region: string }>(key);
+  if (saved) return saved;
+
+  const [name, ...qualifiers] = o.city.split(',').map((part) => part.trim()).filter(Boolean);
+  const url = `https://geocoding-api.open-meteo.com/v1/search?count=10&language=${o.lang.slice(0, 2)}&name=${encodeURIComponent(name)}`;
+  const res = await safeFetch(url);
+  const hits = ((await res.json()) as { results?: GeoHit[] }).results ?? [];
+  if (!hits.length) throw new Error(`City "${name}" not found. Try another spelling or set lat/lon.`);
+
+  // sem qualificador fica o primeiro (o mais populoso); com qualificador, o que bater com todos
+  const hit = qualifiers.length ? hits.find((h) => qualifiers.every((q) => matches(h, q))) : hits[0];
+  if (!hit) {
+    const options = hits.slice(0, 4).map((h) => `${h.name} (${regionOf(h)})`).join('; ');
+    throw new Error(`No "${name}" in "${qualifiers.join(', ')}". Found: ${options}.`);
+  }
+  const geo = { lat: hit.latitude, lon: hit.longitude, name: hit.name, region: regionOf(hit) };
+  store(key, geo);
+  return geo;
 }
 
 /** fetch com mensagens de erro amigáveis. */

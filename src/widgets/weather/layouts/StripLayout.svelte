@@ -13,7 +13,8 @@
     <WeatherIcon code={data.current.code} isDay={data.current.isDay} size={36} animate={opts.animate} />
     <div class="col">
       <span class="temp">{deg(data.current.temp)}</span>
-      <span class="city">{data.place}</span>
+      <span class="city" title={data.region}>{data.place}</span>
+      {#if opts.showRegion && data.region}<span class="region">{data.region}</span>{/if}
     </div>
   </div>
   <div class="divider"></div>
@@ -34,6 +35,7 @@
   .col { display: flex; flex-direction: column; }
   .temp { font-size: 24px; font-weight: 700; line-height: 1; }
   .city { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; }
+  .region { font-size: 9px; color: var(--text-muted); white-space: nowrap; }
   .divider { width: 1px; align-self: stretch; background: var(--border); }
   .days { flex: 1; display: flex; justify-content: space-between; gap: 4px; overflow: hidden; }
   .day { display: flex; flex-direction: column; align-items: center; gap: 2px; }

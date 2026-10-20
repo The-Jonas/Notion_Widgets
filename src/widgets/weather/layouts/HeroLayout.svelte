@@ -32,7 +32,7 @@
 <div class="hero" style:background={gradient}>
   <div class="top">
     <div>
-      <span class="city">{data.place}</span>
+      <span class="city">{data.place}{#if opts.showRegion && data.region}<small>{`  ·  ${data.region}`}</small>{/if}</span>
       <span class="temp">{deg(data.current.temp)}</span>
       <span class="desc">{describe(data.current.code, opts.lang)} · {t.hi} {deg(today.max)} {t.lo} {deg(today.min)}</span>
     </div>
@@ -68,6 +68,7 @@
   .top { display: flex; justify-content: space-between; align-items: center; }
   .top > div { display: flex; flex-direction: column; }
   .city { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.9; }
+  .city small { white-space: pre; font-weight: 500; letter-spacing: 0.02em; text-transform: none; opacity: 0.85; }
   .temp { font-size: 54px; font-weight: 800; line-height: 1; letter-spacing: -0.04em; margin: 2px 0; }
   .desc { font-size: 13px; opacity: 0.9; }
   .chips { display: flex; gap: 6px; flex-wrap: wrap; }
