@@ -24,12 +24,22 @@ const SLOT = getParam('id', '').trim() || shortHash(location.search);
 const KEY = (name: string) => `nw-timer:${SLOT}:${name}`;
 const STATS_KEY = 'nw-timer-stats';
 
-/** Ajustes salvos deste timer (gaveta própria), por cima dos padrões da URL. */
+// "Assinatura" dos ajustes que vêm do link (URL + edições do ✎) DESTE embed.
+// Cada embed lembra a última assinatura que viu: se ela mudou, o link deste embed
+// foi editado e passa a valer pra todos os embeds do mesmo timer (mesmo id).
+const SETTINGS_SIG = JSON.stringify(defaultSettings());
+const SEEN_SIG_KEY = `nw-timer-sig:${location.pathname}${location.search}`;
+
+/** Ajustes deste timer: os salvos (compartilhados entre os embeds do mesmo id, inclusive
+ *  presets 25/5, 50/10...), a não ser que o link deste embed tenha acabado de mudar. */
 function loadSettings(): Settings {
-  const saved = loadJSON<Settings | null>(KEY('settings'), null);
+  const saved = loadJSON<(Settings & { src?: string }) | null>(KEY('settings'), null);
   const base = defaultSettings();
-  if (!saved) return base;
-  return { ...base, ...saved, labels: { ...base.labels, ...saved.labels } };
+  const seen = loadJSON<string | null>(SEEN_SIG_KEY, null);
+  saveJSON(SEEN_SIG_KEY, SETTINGS_SIG);
+  if (!saved || (seen !== null && seen !== SETTINGS_SIG)) return base;
+  const { src: _src, ...rest } = saved;
+  return { ...base, ...rest, labels: { ...base.labels, ...rest.labels } };
 }
 
 const LABELS = { focus: 'FOCUS', short: 'SHORT BREAK', long: 'LONG BREAK', game: 'GAME TIME', over: 'GAME OVER' };
@@ -42,7 +52,6 @@ export class TimerController {
   timer = $state<TimerState>() as TimerState;
   task = $state(loadJSON(KEY('task'), { text: '' }).text);
   stats = $state<DayStats>(loadJSON(STATS_KEY, { date: todayKey(), sessions: 0, minutes: 0 }));
-  settingsOpen = $state(false);
   now = $state(Date.now());
 
   private lastTickSecond = -1;
@@ -80,7 +89,17 @@ export class TimerController {
     if (!this.allowGame) startMode = 'focus';
     this.mode = startMode;
     this.timer = this.loadMode(startMode);
+    this.refreshDuration();
     if (this.stats.date !== todayKey()) this.stats = { date: todayKey(), sessions: 0, minutes: 0 };
+  }
+
+  /** Se a duração da fase mudou nos ajustes e o timer está parado e intocado
+   *  (tempo cheio), passa a usar a duração nova. */
+  private refreshDuration(): void {
+    const fresh = phaseDuration(this.timer.phase, this.settings, this.timer.gameMinutes);
+    if (!this.timer.running && this.timer.remaining === this.timer.duration && this.timer.duration !== fresh) {
+      this.timer = { ...this.timer, remaining: fresh, duration: fresh };
+    }
   }
 
   /** Carrega o estado salvo de um modo (da gaveta deste timer), ou cria um novo. */
@@ -103,8 +122,16 @@ export class TimerController {
     const onStorage = (e: StorageEvent) => {
       if (!e.newValue) return;
       try {
-        if (e.key === KEY(this.mode)) this.timer = JSON.parse(e.newValue);
-        else if (e.key === KEY('settings')) this.settings = { ...this.settings, ...JSON.parse(e.newValue) };
+        if (e.key === KEY(this.mode)) {
+          this.timer = JSON.parse(e.newValue);
+          this.refreshDuration();
+        }
+        else if (e.key === KEY('settings')) {
+          // a assinatura do link não faz parte dos ajustes
+          const { src: _src, ...incoming } = JSON.parse(e.newValue);
+          this.settings = { ...this.settings, ...incoming };
+          this.refreshDuration();
+        }
         else if (e.key === KEY('task')) this.task = JSON.parse(e.newValue).text;
         else if (e.key === STATS_KEY) this.stats = JSON.parse(e.newValue);
       } catch {
@@ -178,7 +205,7 @@ export class TimerController {
     this.timer = { ...this.timer, phase: 'focus', round: 1, running: false, remaining: duration, duration, finished: false };
   }
 
-  /** Chamado quando um ajuste de tempo/rounds muda no painel ⚙. Se o timer
+  /** Chamado quando um ajuste de tempo/rounds muda (presets). Se o timer
    *  estiver parado, aplica na hora; mudar os rounds reinicia o ciclo, porque
    *  o round atual e a pausa longa dependem desse número. */
   settingsChanged(field: 'time' | 'rounds'): void {
@@ -247,11 +274,5 @@ export class TimerController {
     const m = Math.min(600, Math.max(1, minutes));
     const duration = m * MINUTE;
     this.timer = { ...this.timer, gameMinutes: m, duration, remaining: duration, finished: false };
-  }
-
-  /** Toca o som escolhido uma vez (botão de teste nos ajustes). */
-  previewSound(): void {
-    unlockAudio();
-    playSound(this.settings.sound, this.settings.volume);
   }
 }

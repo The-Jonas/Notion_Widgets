@@ -50,7 +50,7 @@ export const WIDGETS: WidgetInfo[] = [
   {
     id: 'timer',
     name: '⏱ Pomodoro + Game Timer',
-    description: 'Focus cycles, presets, daily stats and a game-time countdown. Six styles.',
+    description: 'Focus cycles, presets, daily stats and a game-time countdown. Seven styles. Change times, sound and texts with the ✎ editor.',
     height: 340,
     options: [
       { key: 'style', label: 'Style', type: 'select', default: 'ring', choices: ['ring', 'orbit', 'pill', 'card', 'retro', 'minimal', 'terminal'] },
@@ -63,6 +63,7 @@ export const WIDGETS: WidgetInfo[] = [
       { key: 'rounds', label: 'Rounds to long break', type: 'number', default: '4' },
       { key: 'game', label: 'Game time (min)', type: 'number', default: '60' },
       { key: 'sound', label: 'Sound', type: 'select', default: 'chime', choices: ['chime', 'bell', 'digital', 'soft', 'none'] },
+      { key: 'volume', label: 'Volume', type: 'select', default: '0.6', choices: ['0.2', '0.4', '0.6', '0.8', '1'] },
       { key: 'tick', label: 'Tick while focusing', type: 'toggle', default: '0' },
       { key: 'auto', label: 'Auto-start next phase', type: 'toggle', default: '0' },
       { key: 'label_focus', label: 'Text · focus', type: 'text', default: '' },

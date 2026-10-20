@@ -1,7 +1,6 @@
 <script lang="ts">
   import { getParam } from '../../shared/params';
   import { TimerController } from './controller.svelte';
-  import Settings from './parts/Settings.svelte';
   import RingFace from './faces/RingFace.svelte';
   import OrbitFace from './faces/OrbitFace.svelte';
   import PillFace from './faces/PillFace.svelte';
@@ -29,7 +28,6 @@
 </script>
 
 <main class="timer" data-phase={t.timer.phase}>
-  <Settings {t} />
   {#if style === 'orbit'}
     <OrbitFace {t} />
   {:else if style === 'pill'}
