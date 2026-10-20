@@ -35,10 +35,12 @@
 </svelte:head>
 
 <div class="retro">
-  <div class="modes">
-    <button class:active={t.mode === 'focus'} onclick={() => t.switchMode('focus')}>⚔ QUEST</button>
-    <button class:active={t.mode === 'game'} onclick={() => t.switchMode('game')}>🎮 PLAY</button>
-  </div>
+  {#if t.allowGame}
+    <div class="modes">
+      <button class:active={t.mode === 'focus'} onclick={() => t.switchMode('focus')}>⚔ QUEST</button>
+      <button class:active={t.mode === 'game'} onclick={() => t.switchMode('game')}>🎮 PLAY</button>
+    </div>
+  {/if}
   <PhaseTabs {t} pixel />
   <div class="title">{t.labelFor(t.timer.finished ? 'over' : t.timer.phase, TITLES)}</div>
   <div class="clock">{t.clock}</div>

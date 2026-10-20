@@ -8,6 +8,7 @@
   import CardFace from './faces/CardFace.svelte';
   import RetroFace from './faces/RetroFace.svelte';
   import MinimalFace from './faces/MinimalFace.svelte';
+  import TerminalFace from './faces/TerminalFace.svelte';
 
   const style = getParam('style', 'ring');
   const t = new TimerController(getParam('mode', 'focus') === 'game' ? 'game' : 'focus');
@@ -36,6 +37,8 @@
     <RetroFace {t} />
   {:else if style === 'minimal'}
     <MinimalFace {t} />
+  {:else if style === 'terminal'}
+    <TerminalFace {t} />
   {:else}
     <RingFace {t} />
   {/if}

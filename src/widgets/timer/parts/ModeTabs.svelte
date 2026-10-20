@@ -4,10 +4,12 @@
   let { t }: { t: TimerController } = $props();
 </script>
 
+{#if t.allowGame}
 <nav class="tabs">
   <button class:active={t.mode === 'focus'} onclick={() => t.switchMode('focus')}>🎯 Focus</button>
   <button class:active={t.mode === 'game'} onclick={() => t.switchMode('game')}>🎮 Game</button>
 </nav>
+{/if}
 
 <style>
   .tabs {

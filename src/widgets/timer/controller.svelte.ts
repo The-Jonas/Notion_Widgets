@@ -7,7 +7,7 @@ import {
   loadJSON, saveJSON, todayKey, formatClock, MINUTE, FOCUS_PRESETS,
 } from './engine';
 import { unlockAudio, playSound, playTick, askNotificationPermission, notify } from './alerts';
-import { getNumber } from '../../shared/params';
+import { getNumber, getBool } from '../../shared/params';
 
 /** Usa os ajustes salvos só se a URL do embed for a mesma de quando foram salvos;
  *  se você mudar a URL (ex.: focus=50), a URL vence. */
@@ -22,6 +22,8 @@ const LABELS = { focus: 'FOCUS', short: 'SHORT BREAK', long: 'LONG BREAK', game:
 
 export class TimerController {
   mode = $state<Mode>('focus');
+  /** false quando o embed esconde o modo Game (?gamemode=0): só pomodoro. */
+  readonly allowGame = getBool('gamemode', true);
   settings = $state<Settings>(loadSettings());
   timer = $state<TimerState>() as TimerState;
   task = $state(loadJSON('nw-timer-task', { text: '' }).text);
@@ -61,6 +63,7 @@ export class TimerController {
 
   /** Cria o controlador no modo pedido, restaurando o que estiver salvo. */
   constructor(startMode: Mode) {
+    if (!this.allowGame) startMode = 'focus';
     this.mode = startMode;
     this.timer = this.loadMode(startMode);
     if (this.stats.date !== todayKey()) this.stats = { date: todayKey(), sessions: 0, minutes: 0 };
@@ -190,7 +193,7 @@ export class TimerController {
 
   /** Troca entre FOCUS e GAME, mantendo o estado salvo de cada um. */
   switchMode(next: Mode): void {
-    if (next === this.mode) return;
+    if (next === this.mode || (next === 'game' && !this.allowGame)) return;
     this.persist();
     this.mode = next;
     this.timer = this.loadMode(next);

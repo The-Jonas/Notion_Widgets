@@ -8,14 +8,14 @@
   let { repos, opts }: { repos: Repo[]; opts: GitHubOptions } = $props();
   const shown = $derived(
     repos
-      .filter((r) => !r.fork || repos.length === 1)
+      .filter((r) => opts.forks || !r.fork || repos.length === 1)
       .sort((a, b) => (opts.sort === 'updated' ? b.pushedAt.localeCompare(a.pushedAt) : b.stars - a.stars || b.pushedAt.localeCompare(a.pushedAt)))
       .slice(0, repos.length === 1 ? 1 : opts.count),
   );
 </script>
 
 <!-- 4 repos viram 2x2; até 3 ficam numa linha; mais que 4, 3 por linha -->
-<div class="grid" class:single={shown.length === 1} style:--cols={shown.length <= 3 ? shown.length : shown.length === 4 ? 2 : 3}>
+<div class="grid" class:single={shown.length === 1} class:many={shown.length > 6} style:--cols={shown.length <= 3 ? shown.length : shown.length === 4 ? 2 : 3}>
   {#each shown as r, i (r.fullName)}
     <div class="repo">
       <div class="head">
@@ -53,5 +53,9 @@
   .meta span { flex-shrink: 0; display: flex; align-items: center; gap: 4px; }
   .meta i { width: 9px; height: 9px; border-radius: 50%; }
   .when { margin-left: auto; flex-shrink: 1 !important; overflow: hidden; text-overflow: ellipsis; }
+  /* muitos repositórios: cards mais baixos (sem tópicos, descrição em 1 linha) */
+  .many .repo { padding: 9px 12px; gap: 4px; }
+  .many .topics { display: none; }
+  .many .desc { -webkit-line-clamp: 1; line-clamp: 1; }
   @media (max-width: 460px) { .grid { grid-template-columns: 1fr; } }
 </style>
