@@ -180,6 +180,7 @@ export const WIDGETS: WidgetInfo[] = [
       { key: 'layout', label: 'Keyboard layout', type: 'select', default: 'qwerty', choices: ['qwerty', 'abnt2'] },
       { key: 'keyboard', label: 'Show keyboard', type: 'toggle', default: '1' },
       { key: 'goal', label: 'WPM goal', type: 'number', default: '40' },
+      { key: 'daily', label: 'Daily practice (min, 0 hides)', type: 'number', default: '15' },
       { key: 'style', label: 'Style', type: 'select', default: 'clean', choices: ['clean', 'terminal'] },
       { key: 'lang', label: 'Language', type: 'select', default: 'en-US', choices: ['en-US', 'pt-BR'] },
     ],

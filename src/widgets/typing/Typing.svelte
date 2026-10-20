@@ -1,11 +1,13 @@
 <!-- Treino de digitação com 10 dedos: texto pra digitar, teclado na tela com o dedo
      certo de cada tecla, lições por fileira, resultado (WPM e precisão), histórico
-     e as teclas em que você mais erra. Tab ou Esc recomeça. -->
+     e as teclas em que você mais erra. Tab ou Esc recomeça.
+     Também conta quanto tempo você digitou hoje, pra bater a meta diária (daily). -->
 <script lang="ts">
   import { getParam, getNumber, getBool } from '../../shared/params';
   import { buildText, LESSONS } from './words';
   import { LAYOUTS, FINGER_NAMES, FINGER_COLORS, findKey, type Key } from './keyboard';
-  import { loadRuns, saveRun, loadMisses, addMisses, clearHistory, type Run } from './history';
+  import { onMount } from 'svelte';
+  import { loadRuns, saveRun, loadMisses, addMisses, clearHistory, loadPracticeToday, addPractice, PRACTICE_KEY, type Run } from './history';
 
   // ---------- opções da URL ----------
   const pt = getParam('lang', 'en-US') === 'pt-BR';
@@ -15,6 +17,7 @@
   const showKeyboard = getBool('keyboard', true);
   const goal = Math.max(5, getNumber('goal', 40));
   const style = getParam('style', 'clean');
+  const daily = Math.max(0, getNumber('daily', 15)); // meta de prática por dia, em minutos (0 esconde)
   const layout = LAYOUTS[layoutName];
 
   const MODES = ['words', 'home', 'top', 'bottom', 'numbers'];
@@ -26,8 +29,8 @@
   const amount = $derived(parseInt(limit, 10));
 
   const T = pt
-    ? { start: 'clique aqui e comece a digitar', restart: 'Tab ou Esc recomeça', wpm: 'ppm', acc: 'precisão', time: 'tempo', best: 'recorde', avg: 'média (10)', today: 'hoje', tests: 'testes', weak: 'teclas que mais erra', again: '↻ de novo', next: 'próxima lição →', goal: 'meta', reset: 'zerar histórico', words: 'palavras', none: 'nada ainda', space: 'espaço', shift: 'shift', then: 'depois' }
-    : { start: 'click here and start typing', restart: 'Tab or Esc to restart', wpm: 'wpm', acc: 'accuracy', time: 'time', best: 'best', avg: 'avg (10)', today: 'today', tests: 'tests', weak: 'keys you miss most', again: '↻ again', next: 'next lesson →', goal: 'goal', reset: 'reset history', words: 'words', none: 'nothing yet', space: 'space', shift: 'shift', then: 'then' };
+    ? { start: 'clique aqui e comece a digitar', restart: 'Tab ou Esc recomeça', wpm: 'ppm', acc: 'precisão', time: 'tempo', best: 'recorde', avg: 'média (10)', today: 'hoje', tests: 'testes', weak: 'teclas que mais erra', again: '↻ de novo', next: 'próxima lição →', goal: 'meta', practice: 'prática hoje', done: 'meta do dia batida', reset: 'zerar histórico', words: 'palavras', none: 'nada ainda', space: 'espaço', shift: 'shift', then: 'depois' }
+    : { start: 'click here and start typing', restart: 'Tab or Esc to restart', wpm: 'wpm', acc: 'accuracy', time: 'time', best: 'best', avg: 'avg (10)', today: 'today', tests: 'tests', weak: 'keys you miss most', again: '↻ again', next: 'next lesson →', goal: 'goal', practice: 'practice today', done: 'daily goal done', reset: 'reset history', words: 'words', none: 'nothing yet', space: 'space', shift: 'shift', then: 'then' };
 
   const MODE_LABEL: Record<string, string> = {
     words: pt ? 'palavras' : 'words',
@@ -52,6 +55,60 @@
   let input = $state<HTMLInputElement>();
   let textBox = $state<HTMLDivElement>();
   let timer: ReturnType<typeof setInterval> | undefined;
+
+  // ---------- tempo de prática do dia ----------
+  // conta só o tempo digitando de verdade: pausas maiores que IDLE_MS não entram
+  const IDLE_MS = 5000;
+  let practiceMs = $state(loadPracticeToday());
+  let lastKeyAt = 0;
+  let pendingMs = 0;
+
+  /** Grava o tempo acumulado no navegador. */
+  function flushPractice() {
+    if (pendingMs <= 0) return;
+    practiceMs = addPractice(pendingMs);
+    pendingMs = 0;
+  }
+
+  /** Conta o intervalo desde a última tecla, se você não parou. */
+  function countPractice() {
+    const t = Date.now();
+    const gap = t - lastKeyAt;
+    lastKeyAt = t;
+    if (gap > IDLE_MS) return;
+    pendingMs += gap;
+    practiceMs += gap; // mostra na hora; grava de tempos em tempos
+    if (pendingMs > 3000) {
+      const shown = practiceMs;
+      flushPractice();
+      practiceMs = Math.max(practiceMs, shown);
+    }
+  }
+
+  // outro embed (ou a virada do dia) mudou o total: relê
+  onMount(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === PRACTICE_KEY) practiceMs = loadPracticeToday() + pendingMs;
+    };
+    const tick = setInterval(() => (practiceMs = loadPracticeToday() + pendingMs), 60000);
+    window.addEventListener('storage', onStorage);
+    window.addEventListener('pagehide', flushPractice);
+    return () => {
+      flushPractice();
+      clearInterval(tick);
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('pagehide', flushPractice);
+    };
+  });
+
+  const dailyMs = daily * 60000;
+  const dailyDone = $derived(daily > 0 && practiceMs >= dailyMs);
+
+  /** Formata ms como m:ss. */
+  function mmss(ms: number): string {
+    const sec = Math.floor(ms / 1000);
+    return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
+  }
 
   /** Gera um texto novo e zera o teste. */
   function reset() {
@@ -105,6 +162,7 @@
         if (timed && now - startedAt >= amount * 1000) finish();
       }, 200);
     }
+    countPractice();
     const expected = text[typed.length];
     keystrokes++;
     if (ch !== expected && expected !== undefined) misses[expected] = (misses[expected] ?? 0) + 1;
@@ -122,6 +180,7 @@
     now = endAt;
     finished = true;
     clearInterval(timer);
+    flushPractice();
     if (typed.length >= 5) {
       runs = saveRun({ t: endAt, wpm, acc, mode: `${mode}·${limit}` });
       missMap = addMisses(misses);
@@ -255,7 +314,7 @@
       oninput={onInput}
       onkeydown={onKey}
       onfocus={() => (focused = true)}
-      onblur={() => (focused = false)}
+      onblur={() => { focused = false; flushPractice(); }}
     />
 
     {#if showKeyboard && !finished}
@@ -275,6 +334,14 @@
 
     <!-- histórico -->
     <div class="history">
+      {#if daily > 0}
+        <!-- meta diária de prática -->
+        <div class="daily" class:done={dailyDone}>
+          <span class="dlabel">{dailyDone ? `✓ ${T.done}` : `⏱ ${T.practice}`}</span>
+          <div class="dbar"><i style:width="{Math.min(1, practiceMs / dailyMs) * 100}%"></i></div>
+          <span class="dtime">{mmss(practiceMs)} / {daily}:00</span>
+        </div>
+      {/if}
       <div class="nums">
         <span><b>{best}</b> {T.best}</span>
         <span><b>{avg10}</b> {T.avg}</span>
@@ -353,6 +420,15 @@
   .key.spacebar { width: 220px; }
   .key.next { background: var(--f, var(--accent)); color: #111; border-color: var(--f, var(--accent)); transform: translateY(-1px); font-weight: 700; }
   .key.mod.next, .key.spacebar.next { background: var(--accent); border-color: var(--accent); }
+
+  /* meta diária */
+  .daily { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--text-muted); }
+  .dlabel { white-space: nowrap; }
+  .dbar { flex: 1; height: 6px; border-radius: 99px; background: var(--bg-hover); overflow: hidden; }
+  .dbar i { display: block; height: 100%; border-radius: 99px; background: color-mix(in srgb, var(--accent) 70%, transparent); transition: width 0.3s; }
+  .dtime { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .daily.done .dlabel, .daily.done .dtime { color: #4dab9a; font-weight: 600; }
+  .daily.done .dbar i { background: #4dab9a; }
 
   /* histórico */
   .history { display: flex; flex-direction: column; gap: 6px; padding-top: 6px; border-top: 1px solid var(--border); }

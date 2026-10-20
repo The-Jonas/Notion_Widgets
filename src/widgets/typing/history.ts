@@ -9,6 +9,7 @@ export interface Run {
 
 const RUNS_KEY = 'nw-typing-runs';
 const MISSES_KEY = 'nw-typing-misses';
+export const PRACTICE_KEY = 'nw-typing-practice'; // { 'AAAA-MM-DD': ms digitando }
 
 /** Lê um JSON salvo; devolve o padrão se faltar ou der erro. */
 function load<T>(key: string, fallback: T): T {
@@ -51,6 +52,26 @@ export function addMisses(add: Record<string, number>): Record<string, number> {
   for (const [k, n] of Object.entries(add)) all[k] = (all[k] ?? 0) + n;
   save(MISSES_KEY, all);
   return all;
+}
+
+/** Chave do dia de hoje no horário local (AAAA-MM-DD). */
+function dayKey(d = new Date()): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/** Quanto tempo (ms) você já praticou hoje. */
+export function loadPracticeToday(): number {
+  return load<Record<string, number>>(PRACTICE_KEY, {})[dayKey()] ?? 0;
+}
+
+/** Soma tempo de prática no dia de hoje (guarda só os últimos 60 dias) e devolve o total do dia. */
+export function addPractice(ms: number): number {
+  const all = load<Record<string, number>>(PRACTICE_KEY, {});
+  const key = dayKey();
+  all[key] = (all[key] ?? 0) + ms;
+  const kept = Object.fromEntries(Object.entries(all).sort().slice(-60));
+  save(PRACTICE_KEY, kept);
+  return kept[key];
 }
 
 /** Zera histórico e erros. */
