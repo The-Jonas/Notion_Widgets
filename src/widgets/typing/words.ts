@@ -1,10 +1,11 @@
 // Palavras e lições do treino de digitação.
 
-export const EN = `the be to of and a in that have it for not on with he as you do at this but his by from they we say her she or an will my one all would there their what so up out if about who get which go me when make can like time no just him know take people into year your good some could them see other than then now look only come its over think also back after use two how our work first well way even new want because any these give day most us is was are been has had did said each very through long where much should still own find here thing many right life tell great hand old world place again home while last never under keep same big house small found every point school number off always open begin seem help talk turn start show might city play run move live light night write mother father story read learn study code test build`
-  .split(/\s+/);
+import { EN_WORDS } from './wordlists/en';
+import { PT_WORDS } from './wordlists/pt';
 
-export const PT = `de que não um uma para com por mais como mas foi ele ela isso seu sua dos das também quando muito nos já está eu só pelo pela até ser tem ter isso entre depois sem mesmo aos seus quem nas esse eles essa num nem suas meu minha numa pelos elas qual nós lhe deles essas esses pelas este dele tu você vocês vai vou fazer feito ano dia vez casa tempo vida coisa homem mulher mundo trabalho parte lugar caso ponto forma grupo problema mão filho olho noite água cidade nome hora país dinheiro amigo jogo livro aula prova estudo código função valor tela teclado escrever rápido devagar certo errado sempre nunca agora hoje amanhã ontem bom boa novo nova grande pequeno primeiro último melhor pior fácil difícil claro então porque onde aqui ali lá cada todo toda todos outro outra pouco tanto ainda bem mal sim talvez obrigado professor faculdade programa sistema projeto memória arquivo pasta janela`
-  .split(/\s+/);
+// listas sem repetição (o banco grande fica em wordlists/)
+export const EN = [...new Set(EN_WORDS)];
+export const PT = [...new Set(PT_WORDS)];
 
 /** Tira acentos e cedilha (pra treinar sem as teclas mortas). */
 export function plain(word: string): string {
