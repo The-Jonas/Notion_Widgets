@@ -103,8 +103,14 @@ export const WIDGETS: WidgetInfo[] = [
     height: 200,
     options: [
       { key: 'user', label: 'GitHub username', type: 'text', default: '' },
+      { key: 'style', label: 'Snake style', type: 'select', default: 'classic', choices: ['classic', 'smooth', 'neon', 'pixel'] },
       { key: 'dots', label: 'Squares', type: 'select', default: 'accent', choices: ['accent', 'github'] },
+      {
+        key: 'snake_color', label: 'Snake color', type: 'select', default: 'auto',
+        choices: ['auto', 'blue', 'purple', 'green', 'orange', 'red', 'pink', 'yellow', 'gray'],
+      },
       { key: 'speed', label: 'Speed', type: 'select', default: 'normal', choices: ['slow', 'normal', 'fast'] },
+      { key: 'bar', label: 'Progress bar', type: 'select', default: 'smooth', choices: ['smooth', 'steps', 'none'] },
       { key: 'stats', label: 'Show stats line', type: 'toggle', default: '1' },
       { key: 'lang', label: 'Language', type: 'select', default: 'en-US', choices: ['en-US', 'pt-BR'] },
       { key: 'source', label: 'Source', type: 'select', default: 'live', choices: ['live', 'generated'] },

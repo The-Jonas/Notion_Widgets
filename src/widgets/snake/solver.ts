@@ -1,6 +1,9 @@
 // Calcula o caminho da cobrinha: ela entra pelo canto, come os quadradinhos
 // do nível mais fraco pro mais forte (1 → 4) desviando do próprio corpo e,
 // no fim, volta pro canto de onde saiu (assim a animação fica em loop).
+// Regra de ordem: na fase do nível L ela só pode atravessar casas vazias, já
+// comidas ou de nível ≤ L. Um quadradinho fraco cercado de fortes fica pra
+// depois e é comido assim que der pra chegar nele.
 import type { ContributionGrid } from './contributions';
 
 export interface Point {
@@ -15,10 +18,6 @@ export interface SnakePlan {
 }
 
 export const SNAKE_LENGTH = 4;
-
-// custo extra pra atravessar um quadradinho de nível maior que o alvo atual:
-// faz a cobrinha preferir contornar e comer na ordem certa
-const DETOUR_COST = 40;
 
 /** Fila de prioridade mínima (heap binário) usada pelo Dijkstra. */
 class MinHeap {
@@ -94,8 +93,9 @@ export function planSnake(grid: ContributionGrid): SnakePlan {
     }
   };
 
-  /** Dijkstra da cabeça até a casa mais barata que satisfaça "isGoal". */
-  const route = (isGoal: (n: number) => boolean, target: number, avoidBody: boolean): number[] | null => {
+  /** Busca em largura da cabeça até a casa mais próxima que satisfaça "isGoal",
+      atravessando só casas de nível ≤ maxLevel (ou já comidas). */
+  const route = (isGoal: (n: number) => boolean, maxLevel: number, avoidBody: boolean): number[] | null => {
     const blocked = new Set<number>(avoidBody ? body().slice(0, -1) : []);
     const head = path[path.length - 1];
     blocked.delete(head);
@@ -119,8 +119,8 @@ export function planSnake(grid: ContributionGrid): SnakePlan {
         if (nx < -1 || ny < -1 || nx > grid.cols || ny > grid.rows) continue;
         const m = id(nx, ny);
         if (blocked.has(m)) continue;
-        const pricey = level[m] > target && !eaten[m];
-        const nd = d + 1 + (pricey ? DETOUR_COST : 0);
+        if (level[m] > maxLevel && !eaten[m]) continue;
+        const nd = d + 1;
         if (nd < dist[m]) {
           dist[m] = nd;
           prev[m] = n;
@@ -131,11 +131,12 @@ export function planSnake(grid: ContributionGrid): SnakePlan {
     return null;
   };
 
-  // come nível por nível, sempre o alvo mais próximo
-  for (let target = 1; target <= 4; target++) {
-    const isGoal = (n: number) => level[n] === target && !eaten[n];
-    while (grid.cells.some((c) => c.level === target && !eaten[id(c.x, c.y)])) {
-      const r = route(isGoal, target, true) ?? route(isGoal, target, false);
+  // come nível por nível, sempre o alvo mais próximo; alvos inalcançáveis
+  // ficam pra fase seguinte (por isso o alvo é "nível ≤ L", não "= L")
+  for (let maxLevel = 1; maxLevel <= 4; maxLevel++) {
+    const isGoal = (n: number) => level[n] > 0 && level[n] <= maxLevel && !eaten[n];
+    for (;;) {
+      const r = route(isGoal, maxLevel, true) ?? route(isGoal, maxLevel, false);
       if (!r) break;
       r.forEach(step);
     }
