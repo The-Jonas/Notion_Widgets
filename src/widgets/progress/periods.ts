@@ -14,6 +14,7 @@ export interface ProgressOptions {
   labels: Record<PeriodKey, string>;
   customStart: Date | null;
   customEnd: Date | null;
+  title: string;          // título opcional acima do widget
 }
 
 export interface PeriodItem {
@@ -23,6 +24,8 @@ export interface PeriodItem {
   percent: string;        // já formatado, ex.: "65%"
   detail: string;         // ex.: "Day 20 of 31"
   color: string;          // cor CSS usada no preenchimento
+  units: number;          // em quantas unidades o período se divide (horas, dias, meses…)
+  unitsDone: number;      // quantas unidades já passaram, com fração
 }
 
 // cores fixas do modo multicolor (paleta do Notion)
@@ -94,6 +97,7 @@ export function readOptions(): ProgressOptions {
     },
     customStart,
     customEnd,
+    title: getParam('title', '').trim(),
   };
 }
 
@@ -156,12 +160,35 @@ function detailFor(key: PeriodKey, now: Date, start: Date, end: Date, o: Progres
   }
 }
 
+/** Divide o período em unidades: dia = 24 horas, semana/mês = dias,
+    ano = 12 meses, período personalizado = semanas. */
+function unitsFor(key: PeriodKey, now: Date, start: Date, end: Date): [number, number] {
+  const elapsedDays = (now.getTime() - start.getTime()) / DAY_MS;
+  const totalDays = Math.round((end.getTime() - start.getTime()) / DAY_MS);
+  switch (key) {
+    case 'day':
+      return [24, now.getHours() + now.getMinutes() / 60];
+    case 'week':
+    case 'month':
+      return [totalDays, elapsedDays];
+    case 'year': {
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+      const frac = (now.getTime() - monthStart.getTime()) / (monthEnd.getTime() - monthStart.getTime());
+      return [12, now.getMonth() + frac];
+    }
+    case 'custom':
+      return [Math.max(1, Math.ceil(totalDays / 7)), elapsedDays / 7];
+  }
+}
+
 /** Calcula todos os períodos visíveis pro instante "now". */
 export function computePeriods(now: Date, o: ProgressOptions): PeriodItem[] {
   return o.periods.map((key) => {
     const [start, end] = bounds(key, now, o);
     const raw = (now.getTime() - start.getTime()) / (end.getTime() - start.getTime());
     const progress = Math.min(1, Math.max(0, raw));
+    const [units, done] = unitsFor(key, now, start, end);
     return {
       key,
       label: o.labels[key],
@@ -169,6 +196,8 @@ export function computePeriods(now: Date, o: ProgressOptions): PeriodItem[] {
       percent: formatPercent(progress, o.decimals),
       detail: detailFor(key, now, start, end, o),
       color: o.multicolor ? PERIOD_COLORS[key] : 'var(--accent)',
+      units,
+      unitsDone: Math.min(units, Math.max(0, done)),
     };
   });
 }

@@ -22,7 +22,9 @@
   .outline { width: 100%; max-width: 560px; display: flex; flex-direction: column; gap: 12px; }
   .row { display: grid; grid-template-columns: 1fr 130px; align-items: center; gap: 14px; }
   .track { height: 26px; border: 2px solid var(--text); border-radius: 9px; padding: 3px; }
-  .fill { height: 100%; min-width: 8px; border-radius: 5px; background: var(--fill); transition: width 0.6s ease; }
+  .fill { height: 100%; min-width: 8px; border-radius: 5px; background: var(--fill); transition: width 0.6s ease; transform-origin: left; animation: grow 1s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  @keyframes grow { from { transform: scaleX(0); } }
+
   .text { display: flex; flex-direction: column; line-height: 1.25; }
   .main { font-size: 14px; color: var(--text); }
   .main b { font-weight: 700; font-variant-numeric: tabular-nums; }

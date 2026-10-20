@@ -1,9 +1,12 @@
-# Publica o site no GitHub Pages a cada push na main.
+# Publica o site no GitHub Pages a cada push na main
+# e uma vez por dia (pra atualizar a cobrinha do GitHub).
 name: Deploy to GitHub Pages
 
 on:
   push:
     branches: [main]
+  schedule:
+    - cron: '0 3 * * *'   # todo dia às 00:00 de Brasília
   workflow_dispatch:
 
 permissions:
@@ -26,6 +29,16 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+      # cobrinha: monta a lista de variações (tema × cor) e gera os SVGs em dist/snake/
+      - id: snake
+        run: |
+          mkdir -p dist/snake
+          node scripts/snake-outputs.mjs >> "$GITHUB_OUTPUT"
+      - uses: Platane/snk@v3
+        continue-on-error: true   # se o GitHub falhar, o resto do site publica mesmo assim
+        with:
+          github_user_name: ${{ github.repository_owner }}
+          outputs: ${{ steps.snake.outputs.list }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

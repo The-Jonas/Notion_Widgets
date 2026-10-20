@@ -22,7 +22,8 @@
       </div>
       <div class="cells">
         {#each { length: CELLS } as _, i (i)}
-          <span class="cell"><span class="lit" style:opacity={cellFill(item.progress, i)}></span></span>
+          {@const f = cellFill(item.progress, i)}
+          <span class="cell"><span class="lit" class:current={f > 0 && f < 1} style:--f={f}></span></span>
         {/each}
       </div>
       <span class="percent">{item.percent}</span>
@@ -38,6 +39,8 @@
   .detail { font-size: 10px; color: var(--text-muted); white-space: nowrap; }
   .cells { display: grid; grid-template-columns: repeat(20, 1fr); gap: 3px; }
   .cell { height: 16px; border-radius: 3px; background: color-mix(in srgb, var(--text) 9%, transparent); overflow: hidden; }
-  .lit { display: block; width: 100%; height: 100%; background: var(--fill); }
+  .lit { display: block; width: 100%; height: 100%; background: var(--fill); opacity: var(--f); }
+  .lit.current { animation: charge 1.8s ease-in-out infinite; }
+  @keyframes charge { 50% { opacity: calc(var(--f) * 0.4); } }
   .percent { font-size: 13px; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
 </style>

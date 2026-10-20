@@ -73,10 +73,11 @@ export const WIDGETS: WidgetInfo[] = [
   {
     id: 'progress',
     name: '📊 Progress',
-    description: 'How much of the day, week, month and year has passed (plus an optional custom range like a semester). Six layouts: bars, outline, rings, blocks, cards and retro.',
+    description: 'How much of the day, week, month and year has passed (plus an optional custom range like a semester). Eleven layouts: bars, glow, outline, blocks, dots, retro, rings, concentric, columns, cards and text.',
     height: 220,
     options: [
-      { key: 'style', label: 'Style', type: 'select', default: 'bars', choices: ['bars', 'outline', 'rings', 'blocks', 'cards', 'retro'] },
+      { key: 'style', label: 'Style', type: 'select', default: 'bars', choices: ['bars', 'glow', 'outline', 'blocks', 'dots', 'retro', 'rings', 'concentric', 'columns', 'cards', 'text'] },
+      { key: 'title', label: 'Title (optional)', type: 'text', default: '' },
       { key: 'day', label: 'Show day', type: 'toggle', default: '1' },
       { key: 'week', label: 'Show week', type: 'toggle', default: '1' },
       { key: 'month', label: 'Show month', type: 'toggle', default: '1' },
@@ -93,6 +94,15 @@ export const WIDGETS: WidgetInfo[] = [
       { key: 'label_month', label: 'Text · month', type: 'text', default: '' },
       { key: 'label_year', label: 'Text · year', type: 'text', default: '' },
       { key: 'label_custom', label: 'Text · custom range', type: 'text', default: '' },
+    ],
+  },
+  {
+    id: 'snake',
+    name: '🐍 GitHub Snake',
+    description: 'The snake eating your GitHub contribution graph. Regenerated every day by the deploy workflow for the repo owner.',
+    height: 200,
+    options: [
+      { key: 'dots', label: 'Squares', type: 'select', default: 'accent', choices: ['accent', 'github'] },
     ],
   },
 ];

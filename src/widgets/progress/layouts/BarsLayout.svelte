@@ -25,5 +25,7 @@
   .detail { font-size: 11px; color: var(--text-muted); }
   .percent { margin-left: auto; font-size: 13px; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
   .track { height: 8px; border-radius: 99px; background: color-mix(in srgb, var(--text) 10%, transparent); overflow: hidden; }
-  .fill { height: 100%; border-radius: 99px; background: var(--fill); transition: width 0.6s ease; }
+  .fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, color-mix(in srgb, var(--fill) 70%, transparent), var(--fill)); transition: width 0.6s ease; transform-origin: left; animation: grow 1s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  @keyframes grow { from { transform: scaleX(0); } }
+
 </style>
