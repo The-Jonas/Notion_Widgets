@@ -40,7 +40,9 @@
   function buildQuery(options: WidgetOption[], current: Record<string, string>): string {
     const params = new URLSearchParams();
     for (const opt of options) {
-      if (current[opt.key] !== opt.default) params.set(opt.key, current[opt.key]);
+      // String() porque inputs numéricos com bind:value devolvem number
+      const value = String(current[opt.key]);
+      if (value !== opt.default) params.set(opt.key, value);
     }
     const text = params.toString();
     return text ? `?${text}` : '';

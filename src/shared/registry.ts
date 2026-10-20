@@ -45,6 +45,30 @@ export const WIDGETS: WidgetInfo[] = [
       { key: 'lang', label: 'Date language', type: 'select', default: 'en-US', choices: ['en-US', 'pt-BR'] },
     ],
   },
+  {
+    id: 'timer',
+    name: '⏱ Pomodoro + Game Timer',
+    description: 'Focus cycles, presets, daily stats and a game-time countdown. Six styles.',
+    height: 340,
+    options: [
+      { key: 'style', label: 'Style', type: 'select', default: 'ring', choices: ['ring', 'orbit', 'pill', 'card', 'retro', 'minimal'] },
+      { key: 'mode', label: 'Start in', type: 'select', default: 'focus', choices: ['focus', 'game'] },
+      { key: 'focus', label: 'Focus (min)', type: 'number', default: '25' },
+      { key: 'short', label: 'Short break (min)', type: 'number', default: '5' },
+      { key: 'long', label: 'Long break (min)', type: 'number', default: '15' },
+      { key: 'rounds', label: 'Rounds to long break', type: 'number', default: '4' },
+      { key: 'game', label: 'Game time (min)', type: 'number', default: '60' },
+      { key: 'sound', label: 'Sound', type: 'select', default: 'chime', choices: ['chime', 'bell', 'digital', 'soft', 'none'] },
+      { key: 'tick', label: 'Tick while focusing', type: 'toggle', default: '0' },
+      { key: 'auto', label: 'Auto-start next phase', type: 'toggle', default: '0' },
+      { key: 'label_focus', label: 'Text · focus', type: 'text', default: '' },
+      { key: 'label_short', label: 'Text · short break', type: 'text', default: '' },
+      { key: 'label_long', label: 'Text · long break', type: 'text', default: '' },
+      { key: 'label_game', label: 'Text · game', type: 'text', default: '' },
+      { key: 'label_over', label: 'Text · game over', type: 'text', default: '' },
+      { key: 'label_oversub', label: 'Text · game over line', type: 'text', default: '' },
+    ],
+  },
 ];
 
 /** Endereço público do site no GitHub Pages (usado na URL copiada). */
