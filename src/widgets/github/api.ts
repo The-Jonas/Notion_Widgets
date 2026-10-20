@@ -270,3 +270,89 @@ export async function fetchRepoDetails(fullName: string): Promise<RepoDetails> {
   store(key, details);
   return details;
 }
+
+// ---------- linguagens mais usadas ----------
+
+export interface LangStat {
+  name: string;
+  bytes: number;   // soma dos bytes de código (no modo "repos", vira contagem de repositórios)
+  repos: number;   // em quantos repositórios a linguagem aparece
+}
+
+export interface LangSummary {
+  langs: LangStat[];   // todas, da maior pra menor
+  repos: number;       // quantos repositórios entraram na conta
+  by: 'bytes' | 'repos';
+  partial: boolean;    // true quando o limite da API cortou a busca no meio
+}
+
+const DEMO_BYTES: Record<string, Record<string, number>> = {
+  'The-Last-Lightkeeper': { 'C++': 412000, C: 38000, CMake: 9000, GLSL: 6000 },
+  Notion_Widgets: { Svelte: 96000, TypeScript: 71000, CSS: 12000, HTML: 3000 },
+  'image-processing': { 'Jupyter Notebook': 380000, Python: 120000 },
+  'pomodoro-overlay': { TypeScript: 41000, Rust: 18000, Svelte: 22000 },
+  dotfiles: { Shell: 14000, Lua: 9000 },
+  algorithms: { C: 56000, Python: 21000, Haskell: 8000 },
+};
+
+/** Soma as linguagens de vários repositórios num resumo ordenado. */
+function aggregate(perRepo: Record<string, number>[], by: 'bytes' | 'repos', partial: boolean): LangSummary {
+  const map = new Map<string, LangStat>();
+  for (const langs of perRepo) {
+    for (const [name, bytes] of Object.entries(langs)) {
+      const s = map.get(name) ?? { name, bytes: 0, repos: 0 };
+      s.bytes += by === 'bytes' ? bytes : 1;
+      s.repos += 1;
+      map.set(name, s);
+    }
+  }
+  return { langs: [...map.values()].sort((a, b) => b.bytes - a.bytes), repos: perRepo.length, by, partial };
+}
+
+/**
+ * Linguagens mais usadas do usuário.
+ * by=bytes: soma os bytes de código de cada repositório (igual ao github-readme-stats),
+ *           olhando os `sample` repositórios mais recentes — cada um custa 1 chamada da API.
+ * by=repos: conta em quantos repositórios cada linguagem é a principal (1 chamada só).
+ * Se o limite da API acabar no meio, usa o que já veio; se nada veio, cai pro modo repos.
+ */
+export async function fetchLanguageStats(
+  user: string,
+  o: { by: 'bytes' | 'repos'; forks: boolean; sample: number },
+): Promise<LangSummary> {
+  const all = await fetchRepos(user);
+  const repos = all
+    .filter((r) => o.forks || !r.fork)
+    .sort((a, b) => b.pushedAt.localeCompare(a.pushedAt))
+    .slice(0, o.sample);
+
+  // modo por repositório: só a linguagem principal de cada um
+  const byRepo = () => aggregate(repos.filter((r) => r.language).map((r) => ({ [r.language]: 1 })), 'repos', false);
+  if (o.by === 'repos') return byRepo();
+
+  if (user.toLowerCase() === 'demo') {
+    return aggregate(repos.map((r) => DEMO_BYTES[r.name] ?? {}), 'bytes', false);
+  }
+
+  const key = `gh:langs:${user.toLowerCase()}:${o.forks ? 1 : 0}:${o.sample}`;
+  const hit = cached<LangSummary>(key);
+  if (hit) return hit;
+
+  // busca de 4 em 4 pra não martelar a API; para no primeiro erro de limite
+  const perRepo: Record<string, number>[] = [];
+  let partial = false;
+  for (let i = 0; i < repos.length && !partial; i += 4) {
+    const batch = await Promise.allSettled(
+      repos.slice(i, i + 4).map((r) => gh<Record<string, number>>(`/repos/${r.fullName}/languages`)),
+    );
+    for (const res of batch) {
+      if (res.status === 'fulfilled') perRepo.push(res.value);
+      else partial = true;
+    }
+  }
+  if (!perRepo.length) return byRepo();
+  const summary = aggregate(perRepo, 'bytes', partial);
+  // resultado incompleto não vai pro cache, pra tentar de novo na próxima hora
+  if (!partial) store(key, summary);
+  return summary;
+}

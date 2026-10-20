@@ -48,6 +48,25 @@
     return text ? `?${text}` : '';
   }
 
+  let importUrl = $state('');
+  let importError = $state('');
+
+  // carrega uma URL de embed já existente: escolhe o widget e preenche as opções com ela
+  function loadFromUrl(): void {
+    importError = '';
+    try {
+      const url = new URL(importUrl.trim());
+      const id = url.pathname.match(/widgets\/([^/]+)/)?.[1];
+      const next = WIDGETS.find((w) => w.id === id);
+      if (!next) throw new Error('not a widget URL');
+      selectWidget(next.id);
+      for (const [key, value] of url.searchParams) values[key] = value;
+      importUrl = '';
+    } catch {
+      importError = 'Paste a widget URL like …/Notion_Widgets/widgets/clock/?style=minimal';
+    }
+  }
+
   // copia a URL pública pra colar no /embed do Notion
   async function copyUrl(): Promise<void> {
     await navigator.clipboard.writeText(publicUrl);
@@ -60,6 +79,12 @@
   <aside class="panel">
     <h1><code>- Workbench</code></h1>
     <p class="muted">Preview widgets exactly as they will look inside Notion.</p>
+
+    <div class="import">
+      <input placeholder="Paste an embed URL to edit it…" bind:value={importUrl} onkeydown={(e) => e.key === 'Enter' && loadFromUrl()} />
+      <button onclick={loadFromUrl}>Load</button>
+    </div>
+    {#if importError}<p class="muted small">{importError}</p>{/if}
 
     <label class="field">
       <span>Widget</span>
@@ -123,6 +148,9 @@
 </div>
 
 <style>
+  .import { display: flex; gap: 6px; margin: 10px 0 12px; }
+  .import input { flex: 1; min-width: 0; }
+  .import button { width: auto; padding: 4px 10px; }
   .layout { display: grid; grid-template-columns: 300px 1fr; min-height: 100vh; }
 
   .panel {

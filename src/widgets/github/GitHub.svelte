@@ -1,19 +1,22 @@
-<!-- Widget do GitHub: perfil (card ou neofetch), repositórios ou estatísticas de commits.
+<!-- Widget do GitHub: perfil (card ou neofetch), repositórios, estatísticas de commits
+     ou linguagens mais usadas.
      Busca os dados públicos e escolhe a visualização pelo ?mode= -->
 <script lang="ts">
   import { readOptions } from './options';
-  import { fetchProfile, fetchRepos, fetchRepo, fetchContributions, type Profile, type Repo } from './api';
+  import { fetchProfile, fetchRepos, fetchRepo, fetchContributions, fetchLanguageStats, type Profile, type Repo, type LangSummary } from './api';
   import type { ContributionGrid } from '../snake/contributions';
   import ProfileCard from './views/ProfileCard.svelte';
   import Neofetch from './views/Neofetch.svelte';
   import RepoGrid from './views/RepoGrid.svelte';
   import StatsCard from './views/StatsCard.svelte';
+  import Languages from './views/Languages.svelte';
 
   const opts = readOptions();
 
   let profile = $state<Profile | null>(null);
   let repos = $state<Repo[] | null>(null);
   let grid = $state<ContributionGrid | null>(null);
+  let langs = $state<LangSummary | null>(null);
   let error = $state('');
 
   /** Busca só o que a visualização escolhida precisa. */
@@ -23,6 +26,8 @@
         [profile, repos] = await Promise.all([fetchProfile(opts.user), fetchRepos(opts.user)]);
       } else if (opts.mode === 'repos') {
         repos = opts.repo ? [await fetchRepo(opts.repo)] : await fetchRepos(opts.user);
+      } else if (opts.mode === 'langs') {
+        langs = await fetchLanguageStats(opts.user, { by: opts.by, forks: opts.forks, sample: opts.sample });
       } else {
         grid = await fetchContributions(opts.user);
       }
@@ -35,7 +40,7 @@
   if (!needsUser) load();
 
   const ready = $derived(
-    opts.mode === 'profile' ? !!(profile && repos) : opts.mode === 'repos' ? !!repos : !!grid,
+    opts.mode === 'profile' ? !!(profile && repos) : opts.mode === 'repos' ? !!repos : opts.mode === 'langs' ? !!langs : !!grid,
   );
 </script>
 
@@ -54,6 +59,8 @@
     {/if}
   {:else if opts.mode === 'repos' && repos}
     <RepoGrid {repos} {opts} />
+  {:else if opts.mode === 'langs' && langs}
+    <Languages summary={langs} {opts} />
   {:else if grid}
     <StatsCard {grid} {opts} />
   {/if}

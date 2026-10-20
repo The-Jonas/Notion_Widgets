@@ -27,6 +27,7 @@ export const COMMON_OPTIONS: WidgetOption[] = [
     choices: ['blue', 'purple', 'green', 'orange', 'red', 'pink', 'yellow', 'gray', 'mono'],
   },
   { key: 'bg', label: 'Background', type: 'select', default: 'transparent', choices: ['transparent', 'card', 'page'] },
+  { key: 'edit', label: 'Show ✎ editor on hover', type: 'toggle', default: '1' },
 ];
 
 export const WIDGETS: WidgetInfo[] = [
@@ -146,16 +147,22 @@ export const WIDGETS: WidgetInfo[] = [
   {
     id: 'github',
     name: '🐙 GitHub',
-    description: 'Your public GitHub: profile card (or neofetch style), repository cards, or commit streak stats. Use user=demo to preview.',
+    description: 'Your public GitHub: profile card (or neofetch style), repository cards, commit streak stats or most used languages. Use user=demo to preview.',
     height: 220,
     options: [
       { key: 'user', label: 'GitHub username', type: 'text', default: '' },
-      { key: 'mode', label: 'Show', type: 'select', default: 'profile', choices: ['profile', 'repos', 'stats'] },
+      { key: 'mode', label: 'Show', type: 'select', default: 'profile', choices: ['profile', 'repos', 'stats', 'langs'] },
       { key: 'style', label: 'Profile style', type: 'select', default: 'card', choices: ['card', 'neofetch'] },
       { key: 'repo', label: 'One repo (owner/name, optional)', type: 'text', default: '' },
       { key: 'count', label: 'Repos to show', type: 'select', default: '4', choices: ['2', '3', '4', '6', '8', '12', 'all'] },
       { key: 'forks', label: 'Include forks', type: 'toggle', default: '0' },
       { key: 'sort', label: 'Sort repos by', type: 'select', default: 'updated', choices: ['updated', 'stars'] },
+      { key: 'layout', label: 'Languages layout', type: 'select', default: 'compact', choices: ['compact', 'donut', 'bars', 'terminal', 'pie', 'chips'] },
+      { key: 'top', label: 'Languages to show', type: 'select', default: '6', choices: ['3', '4', '5', '6', '8', '10'] },
+      { key: 'hide', label: 'Hide languages (comma separated)', type: 'text', default: '' },
+      { key: 'by', label: 'Measure languages by', type: 'select', default: 'bytes', choices: ['bytes', 'repos'] },
+      { key: 'sample', label: 'Recent repos counted', type: 'select', default: '30', choices: ['10', '20', '30', '50'] },
+      { key: 'title', label: 'Card title (- hides)', type: 'text', default: '' },
       { key: 'lang', label: 'Language', type: 'select', default: 'en-US', choices: ['en-US', 'pt-BR'] },
     ],
   },
