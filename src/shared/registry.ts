@@ -42,6 +42,7 @@ export const WIDGETS: WidgetInfo[] = [
       { key: 'sweep', label: 'Smooth second hand', type: 'toggle', default: '1' },
       { key: 'numerals', label: 'Numerals 12/3/6/9', type: 'toggle', default: '0' },
       { key: 'date', label: 'Show date', type: 'toggle', default: '1' },
+      { key: 'digits', label: 'Digital time (minimal)', type: 'toggle', default: '0' },
       { key: 'lang', label: 'Date language', type: 'select', default: 'en-US', choices: ['en-US', 'pt-BR'] },
     ],
   },

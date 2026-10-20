@@ -8,6 +8,7 @@ export interface ClockOptions {
   showDate: boolean;
   sweep: boolean;
   numerals: boolean;
+  digits: boolean;
   lang: string;
 }
 
@@ -19,6 +20,7 @@ export function readOptions(): ClockOptions {
     showDate: getBool('date', true),
     sweep: getBool('sweep', true),
     numerals: getBool('numerals', false),
+    digits: getBool('digits', false),
     lang: getParam('lang', 'en-US'),
   };
 }
