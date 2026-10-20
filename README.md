@@ -16,7 +16,9 @@ The **Workbench** previews each widget inside a fake Notion page, lets you tweak
 ## Widgets
 | Widget | URL | Options |
 |---|---|---|
-| Clock | `widgets/clock/` | `format` (24/12), `seconds`, `date`, `lang` |
+| Clock | `widgets/clock/` | `style` (orbit/dots/minimal/stack/analog/hybrid/digital), `format` (24/12), `seconds`, `sweep`, `numerals`, `digits`, `date`, `lang` |
+| Timer | `widgets/timer/` | `style` (ring/orbit/pill/card/retro/minimal), `mode`, `focus`, `short`, `long`, `rounds`, `game`, `sound`, `tick`, `auto`, `label_*` |
+| Progress | `widgets/progress/` | `style` (bars/outline/rings/blocks/cards/retro), `day`, `week`, `month`, `year`, `detail`, `colors` (single/multi), `decimals`, `weekstart`, `lang`, `start` + `end` (custom range), `label_*` |
 
 Every widget also accepts `theme` (dark/light), `accent` (Notion colors) and `bg` (transparent/card/page).
 

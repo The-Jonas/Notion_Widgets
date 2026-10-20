@@ -70,6 +70,31 @@ export const WIDGETS: WidgetInfo[] = [
       { key: 'label_oversub', label: 'Text · game over line', type: 'text', default: '' },
     ],
   },
+  {
+    id: 'progress',
+    name: '📊 Progress',
+    description: 'How much of the day, week, month and year has passed (plus an optional custom range like a semester). Six layouts: bars, outline, rings, blocks, cards and retro.',
+    height: 220,
+    options: [
+      { key: 'style', label: 'Style', type: 'select', default: 'bars', choices: ['bars', 'outline', 'rings', 'blocks', 'cards', 'retro'] },
+      { key: 'day', label: 'Show day', type: 'toggle', default: '1' },
+      { key: 'week', label: 'Show week', type: 'toggle', default: '1' },
+      { key: 'month', label: 'Show month', type: 'toggle', default: '1' },
+      { key: 'year', label: 'Show year', type: 'toggle', default: '1' },
+      { key: 'detail', label: 'Show details', type: 'toggle', default: '1' },
+      { key: 'colors', label: 'Colors', type: 'select', default: 'single', choices: ['single', 'multi'] },
+      { key: 'decimals', label: 'Decimals', type: 'select', default: '0', choices: ['0', '1', '2'] },
+      { key: 'weekstart', label: 'Week starts on', type: 'select', default: 'monday', choices: ['monday', 'sunday'] },
+      { key: 'lang', label: 'Language', type: 'select', default: 'en-US', choices: ['en-US', 'pt-BR'] },
+      { key: 'start', label: 'Custom range · start (YYYY-MM-DD)', type: 'text', default: '' },
+      { key: 'end', label: 'Custom range · end (YYYY-MM-DD)', type: 'text', default: '' },
+      { key: 'label_day', label: 'Text · day', type: 'text', default: '' },
+      { key: 'label_week', label: 'Text · week', type: 'text', default: '' },
+      { key: 'label_month', label: 'Text · month', type: 'text', default: '' },
+      { key: 'label_year', label: 'Text · year', type: 'text', default: '' },
+      { key: 'label_custom', label: 'Text · custom range', type: 'text', default: '' },
+    ],
+  },
 ];
 
 /** Endereço público do site no GitHub Pages (usado na URL copiada). */
