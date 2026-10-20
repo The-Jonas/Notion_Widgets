@@ -19,6 +19,8 @@ export interface DayForecast {
 export interface WeatherData {
   place: string;
   region: string;      // "Estado, País" da cidade encontrada (vazio com lat/lon manuais)
+  lat: number;
+  lon: number;
   current: {
     temp: number;
     feels: number;
@@ -43,6 +45,7 @@ export interface WeatherOptions {
   details: boolean;       // sensação, umidade e vento
   showRegion: boolean;    // mostra estado e país embaixo da cidade
   animate: boolean;       // ícones animados
+  link: 'google' | 'windy' | 'none';  // pra onde vai o clique num dia
 }
 
 /** Lê as opções do widget a partir da URL. */
@@ -61,6 +64,7 @@ export function readOptions(): WeatherOptions {
     details: getBool('details', true),
     showRegion: getBool('region', true),
     animate: getBool('animate', true),
+    link: (['google', 'windy', 'none'] as const).find((v) => v === getParam('link', 'google')) ?? 'google',
   };
 }
 
@@ -154,6 +158,8 @@ function demoData(o: WeatherOptions): WeatherData {
   return {
     place: o.label || 'Sobradinho',
     region: o.lang === 'pt-BR' ? 'Distrito Federal, Brasil' : 'Federal District, Brazil',
+    lat: -15.65,
+    lon: -47.79,
     current: { temp: 29, feels: 31, humidity: 42, wind: 11, windDir: 120, code: 0, isDay: true, time: `${daily[0].date}T14:15` },
     daily,
   };
@@ -179,8 +185,8 @@ export async function fetchWeather(o: WeatherOptions): Promise<WeatherData> {
 
   const unit = o.fahrenheit ? '&temperature_unit=fahrenheit&wind_speed_unit=mph' : '';
   const key = `weather:data2:${lat.toFixed(3)},${lon.toFixed(3)}${unit}`;
-  const hit = cached<Omit<WeatherData, 'place' | 'region'>>(key);
-  if (hit) return { ...hit, place, region };
+  const hit = cached<Omit<WeatherData, 'place' | 'region' | 'lat' | 'lon'>>(key);
+  if (hit) return { ...hit, place, region, lat, lon };
 
   const url = 'https://api.open-meteo.com/v1/forecast'
     + `?latitude=${lat}&longitude=${lon}&timezone=auto&forecast_days=7${unit}`
@@ -188,7 +194,7 @@ export async function fetchWeather(o: WeatherOptions): Promise<WeatherData> {
     + '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,uv_index_max,sunrise,sunset';
   const res = await safeFetch(url);
   const j = await res.json();
-  const data: Omit<WeatherData, 'place' | 'region'> = {
+  const data: Omit<WeatherData, 'place' | 'region' | 'lat' | 'lon'> = {
     current: {
       temp: j.current.temperature_2m,
       feels: j.current.apparent_temperature,
@@ -211,7 +217,7 @@ export async function fetchWeather(o: WeatherOptions): Promise<WeatherData> {
     })),
   };
   store(key, data);
-  return { ...data, place, region };
+  return { ...data, place, region, lat, lon };
 }
 
 // siglas dos estados brasileiros, pra aceitar "Sobradinho, DF"

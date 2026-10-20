@@ -2,7 +2,7 @@
      temperatura grande e a previsão em "pílulas" translúcidas. -->
 <script lang="ts">
   import { type WeatherData, type WeatherOptions, describe, dayName, kindOf, TEXT } from '../api';
-  import { deg, windText } from '../format';
+  import { deg, windText, dayHref } from '../format';
   import WeatherIcon from '../WeatherIcon.svelte';
 
   let { data, opts }: { data: WeatherData; opts: WeatherOptions } = $props();
@@ -47,11 +47,11 @@
   {/if}
   <div class="days">
     {#each days.slice(1) as d, i (d.date)}
-      <div class="pill">
+      <svelte:element this={dayHref(data, opts, d.date, i + 1) ? 'a' : 'div'} href={dayHref(data, opts, d.date, i + 1)} target="_blank" rel="noreferrer" class="pill">
         <span class="name">{dayName(d.date, i + 1, opts.lang)}</span>
         <WeatherIcon code={d.code} size={24} animate={opts.animate} />
         <span class="range"><b>{deg(d.max)}</b> {deg(d.min)}</span>
-      </div>
+      </svelte:element>
     {/each}
   </div>
 </div>
@@ -81,4 +81,6 @@
   .name { font-size: 11px; font-weight: 600; opacity: 0.9; }
   .range { font-size: 11px; opacity: 0.85; white-space: nowrap; }
   .range b { opacity: 1; }
+  a { color: inherit; text-decoration: none; cursor: pointer; transition: background 0.15s, transform 0.15s; }
+  a:hover { transform: translateY(-2px); }
 </style>

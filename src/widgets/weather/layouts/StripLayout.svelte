@@ -1,7 +1,7 @@
 <!-- Layout faixa: tudo numa linha só, pra blocos baixos (ex.: 90 px de altura). -->
 <script lang="ts">
   import { type WeatherData, type WeatherOptions, dayName } from '../api';
-  import { deg } from '../format';
+  import { deg, dayHref } from '../format';
   import WeatherIcon from '../WeatherIcon.svelte';
 
   let { data, opts }: { data: WeatherData; opts: WeatherOptions } = $props();
@@ -20,11 +20,11 @@
   <div class="divider"></div>
   <div class="days">
     {#each days as d, i (d.date)}
-      <div class="day">
+      <svelte:element this={dayHref(data, opts, d.date, i + 1) ? 'a' : 'div'} href={dayHref(data, opts, d.date, i + 1)} target="_blank" rel="noreferrer" class="day">
         <span class="name">{dayName(d.date, i + 1, opts.lang)}</span>
         <WeatherIcon code={d.code} size={20} animate={opts.animate} />
         <span class="range">{deg(d.max)}<i>{deg(d.min)}</i></span>
-      </div>
+      </svelte:element>
     {/each}
   </div>
 </div>
@@ -42,4 +42,6 @@
   .name { font-size: 10px; font-weight: 600; color: var(--text-muted); }
   .range { font-size: 11px; font-weight: 600; }
   .range i { font-style: normal; color: var(--text-muted); margin-left: 4px; font-weight: 400; }
+  a { color: inherit; text-decoration: none; cursor: pointer; transition: background 0.15s, transform 0.15s; }
+  a:hover { transform: translateY(-2px); }
 </style>

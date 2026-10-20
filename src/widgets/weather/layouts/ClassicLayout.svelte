@@ -2,7 +2,7 @@
      e embaixo a previsão dos próximos dias em colunas (estilo Indify, repaginado). -->
 <script lang="ts">
   import { type WeatherData, type WeatherOptions, describe, dayName, TEXT } from '../api';
-  import { deg, windText } from '../format';
+  import { deg, windText, dayHref } from '../format';
   import WeatherIcon from '../WeatherIcon.svelte';
 
   let { data, opts }: { data: WeatherData; opts: WeatherOptions } = $props();
@@ -32,12 +32,12 @@
 
   <div class="days" style:--n={days.length}>
     {#each days as d, i (d.date)}
-      <div class="day" class:today={i === 0}>
+      <svelte:element this={dayHref(data, opts, d.date, i) ? 'a' : 'div'} href={dayHref(data, opts, d.date, i)} target="_blank" rel="noreferrer" class="day" class:today={i === 0}>
         <span class="name">{dayName(d.date, i, opts.lang)}</span>
         <WeatherIcon code={d.code} size={30} animate={opts.animate} />
         <span class="max">{deg(d.max)}</span>
         <span class="min">{deg(d.min)}</span>
-      </div>
+      </svelte:element>
     {/each}
   </div>
 </div>
@@ -64,4 +64,6 @@
   .max { font-size: 13px; font-weight: 700; }
   .min { font-size: 12px; color: var(--text-muted); }
   @media (max-width: 460px) { .details { display: none; } }
+  a { color: inherit; text-decoration: none; cursor: pointer; transition: background 0.15s, transform 0.15s; }
+  a:hover { transform: translateY(-2px); background: color-mix(in srgb, var(--text) 6%, transparent); }
 </style>

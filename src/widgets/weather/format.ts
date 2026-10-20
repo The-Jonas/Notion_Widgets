@@ -1,5 +1,5 @@
 // Formatação compartilhada pelos layouts do clima.
-import type { WeatherOptions } from './api';
+import type { WeatherData, WeatherOptions } from './api';
 
 /** Temperatura arredondada com o símbolo de grau, ex.: "31°". */
 export function deg(t: number): string {
@@ -41,4 +41,17 @@ export function compass(deg: number, pt: boolean): string {
   const en = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
   const br = ['N', 'NE', 'L', 'SE', 'S', 'SO', 'O', 'NO'];
   return (pt ? br : en)[Math.round(((deg % 360) + 360) % 360 / 45) % 8];
+}
+
+/** Link aberto ao clicar num dia: busca do Google com a previsão daquele dia
+    (cidade, estado e dia da semana) ou o mapa do Windy na região. null = sem link. */
+export function dayHref(data: WeatherData, o: WeatherOptions, date: string, index: number): string | null {
+  if (o.link === 'none') return null;
+  if (o.link === 'windy') return `https://www.windy.com/?${data.lat.toFixed(3)},${data.lon.toFixed(3)},9`;
+  const pt = o.lang === 'pt-BR';
+  const when = index === 0
+    ? (pt ? 'hoje' : 'today')
+    : new Date(`${date}T12:00:00`).toLocaleDateString(o.lang, { weekday: 'long' });
+  const query = [pt ? 'clima' : 'weather', data.place, data.region, when].filter(Boolean).join(' ');
+  return `https://www.google.com/search?q=${encodeURIComponent(query)}`;
 }

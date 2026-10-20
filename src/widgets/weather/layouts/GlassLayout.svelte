@@ -2,7 +2,7 @@
      e um painel de vidro fosco por cima com o agora e a previsão. -->
 <script lang="ts">
   import { type WeatherData, type WeatherOptions, describe, dayName, kindOf, TEXT } from '../api';
-  import { deg } from '../format';
+  import { deg, dayHref } from '../format';
   import WeatherIcon from '../WeatherIcon.svelte';
 
   let { data, opts }: { data: WeatherData; opts: WeatherOptions } = $props();
@@ -51,12 +51,12 @@
     </div>
     <div class="days">
       {#each days as d, i (d.date)}
-        <div class="day">
+        <svelte:element this={dayHref(data, opts, d.date, i + 1) ? 'a' : 'div'} href={dayHref(data, opts, d.date, i + 1)} target="_blank" rel="noreferrer" class="day">
           <span>{dayName(d.date, i + 1, opts.lang)}</span>
           <WeatherIcon code={d.code} size={26} animate={opts.animate} />
           <b>{deg(d.max)}</b>
           <small>{deg(d.min)}</small>
-        </div>
+        </svelte:element>
       {/each}
     </div>
   </div>
@@ -94,4 +94,6 @@
   .day { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11px; }
   .day span { opacity: 0.85; font-weight: 600; }
   .day small { opacity: 0.7; }
+  a { color: inherit; text-decoration: none; cursor: pointer; transition: background 0.15s, transform 0.15s; }
+  a:hover { transform: translateY(-2px); }
 </style>

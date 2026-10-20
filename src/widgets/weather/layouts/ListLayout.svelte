@@ -2,7 +2,7 @@
      por dia (mínima → máxima) na escala da semana, estilo app de clima do celular. -->
 <script lang="ts">
   import { type WeatherData, type WeatherOptions, describe, dayName } from '../api';
-  import { deg } from '../format';
+  import { deg, dayHref } from '../format';
   import WeatherIcon from '../WeatherIcon.svelte';
 
   let { data, opts }: { data: WeatherData; opts: WeatherOptions } = $props();
@@ -24,7 +24,7 @@
     <span class="city">{data.place}{#if opts.showRegion && data.region}<small>{data.region}</small>{/if}</span>
   </header>
   {#each days as d, i (d.date)}
-    <div class="row">
+    <svelte:element this={dayHref(data, opts, d.date, i) ? 'a' : 'div'} href={dayHref(data, opts, d.date, i)} target="_blank" rel="noreferrer" class="row">
       <span class="name">{dayName(d.date, i, opts.lang)}</span>
       <span class="icon">
         <WeatherIcon code={d.code} size={22} animate={opts.animate} />
@@ -36,7 +36,7 @@
         {#if i === 0}<span class="dot" style:left="{pos(data.current.temp) * 100}%"></span>{/if}
       </span>
       <span class="max">{deg(d.max)}</span>
-    </div>
+    </svelte:element>
   {/each}
 </div>
 
@@ -62,4 +62,6 @@
   /* faixa do dia: azul nas mínimas, laranja nas máximas */
   .range { position: absolute; top: 0; bottom: 0; border-radius: 99px; background: linear-gradient(90deg, #4dab9a, #ffc53d, #ff7369); }
   .dot { position: absolute; top: 50%; width: 9px; height: 9px; border-radius: 50%; background: #fff; border: 2px solid var(--bg-page); transform: translate(-50%, -50%); }
+  a { color: inherit; text-decoration: none; cursor: pointer; transition: background 0.15s, transform 0.15s; }
+  a:hover { background: color-mix(in srgb, var(--text) 6%, transparent); }
 </style>

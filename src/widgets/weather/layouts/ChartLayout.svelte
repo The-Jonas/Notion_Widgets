@@ -2,7 +2,7 @@
      entre elas preenchida, ícone e dia em cima de cada ponto. -->
 <script lang="ts">
   import { type WeatherData, type WeatherOptions, describe, dayName } from '../api';
-  import { deg } from '../format';
+  import { deg, dayHref } from '../format';
   import WeatherIcon from '../WeatherIcon.svelte';
 
   let { data, opts }: { data: WeatherData; opts: WeatherOptions } = $props();
@@ -50,10 +50,10 @@
   </header>
   <div class="cols" style:--n={days.length}>
     {#each days as d, i (d.date)}
-      <div class="col">
+      <svelte:element this={dayHref(data, opts, d.date, i) ? 'a' : 'div'} href={dayHref(data, opts, d.date, i)} target="_blank" rel="noreferrer" class="col">
         <span class="name" class:today={i === 0}>{dayName(d.date, i, opts.lang)}</span>
         <WeatherIcon code={d.code} size={24} animate={opts.animate} />
-      </div>
+      </svelte:element>
     {/each}
   </div>
   <svg viewBox="0 0 {W} {H}" preserveAspectRatio="none">
@@ -93,4 +93,6 @@
   .labels { position: absolute; left: 0; right: 0; bottom: 0; height: 110px; pointer-events: none; }
   .lbl { position: absolute; transform: translate(-50%, -140%); font-size: 11px; font-weight: 700; }
   .lbl.min { transform: translate(-50%, 40%); color: var(--text-muted); font-weight: 600; }
+  a { color: inherit; text-decoration: none; cursor: pointer; transition: background 0.15s, transform 0.15s; }
+  a:hover { transform: translateY(-2px); }
 </style>
