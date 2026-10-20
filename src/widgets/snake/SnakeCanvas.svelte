@@ -40,6 +40,11 @@
     let height = 0;
     let frame = 0;
     const t0 = performance.now();
+    // ordem em que os quadradinhos coloridos são comidos (pra barra de progresso)
+    const eatOrder = grid.cells
+      .map((c, k) => ({ level: c.level, at: eatenAt[k] }))
+      .filter((c) => c.level > 0 && Number.isFinite(c.at))
+      .sort((a, b) => a.at - b.at);
 
     // ajusta a resolução do canvas ao tamanho do bloco (nítido em telas retina)
     const resize = () => {
@@ -66,10 +71,10 @@
       // nos últimos ms da pausa o grid volta a encher pra recomeçar
       const refill = t > cycleMs - REFILL_MS ? (t - (cycleMs - REFILL_MS)) / REFILL_MS : 0;
 
-      // tamanho da casa: o grid + 1 casa de margem de cada lado cabe no bloco
-      const s = Math.min(width / (grid.cols + 2), height / (grid.rows + 2));
+      // tamanho da casa: o grid + 1 casa de margem de cada lado + 1 linha pra barra
+      const s = Math.min(width / (grid.cols + 2), height / (grid.rows + 3));
       const ox = (width - s * (grid.cols + 2)) / 2 + s;
-      const oy = (height - s * (grid.rows + 2)) / 2 + s;
+      const oy = (height - s * (grid.rows + 3)) / 2 + s;
       const center = (p: Point) => ({ x: ox + p.x * s + s / 2, y: oy + p.y * s + s / 2 });
       const cellSize = s * 0.8;
       const radius = s * 0.2;
@@ -103,6 +108,30 @@
           ctx.stroke();
         });
         ctx.globalAlpha = 1;
+      }
+
+      // barra de progresso: cada quadradinho comido entra nela com a cor do seu nível
+      if (eatOrder.length) {
+        const bx = ox + s * 0.1;
+        const bw = grid.cols * s - s * 0.2;
+        const by = oy + (grid.rows + 1) * s + s * 0.3;
+        const bh = s * 0.32;
+        const segW = bw / eatOrder.length;
+        // na recarga a barra esvazia junto com o grid voltando
+        const visible = refill ? Math.round(eatOrder.length * (1 - refill)) : eatOrder.length;
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect(bx, by, bw, bh, bh / 2);
+        ctx.clip();
+        ctx.fillStyle = colors.levels[0];
+        ctx.fillRect(bx, by, bw, bh);
+        for (let j = 0; j < visible; j++) {
+          const grow = Math.min(1, Math.max(0, stepF - eatOrder[j].at + 1));
+          if (grow <= 0) break;
+          ctx.fillStyle = colors.levels[eatOrder[j].level];
+          ctx.fillRect(bx + j * segW, by, segW * grow + 0.5, bh);
+        }
+        ctx.restore();
       }
 
       // corpo: cada segmento segue a posição da cabeça alguns passos atrás

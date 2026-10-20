@@ -13,6 +13,8 @@
   const accentName = getParam('accent', 'blue');
   const dots = getParam('dots', 'accent') === 'github' ? 'github' : 'accent';
   const source = getParam('source', 'live');
+  // dono do site no GitHub Pages (ex.: "the-jonas" em the-jonas.github.io)
+  const owner = new URL(PUBLIC_BASE).hostname.split('.')[0].toLowerCase();
   const user = getParam('user', '').trim().replace(/^@/, '');
   const showStats = getBool('stats', true);
   const pt = getParam('lang', 'en-US') === 'pt-BR';
@@ -32,6 +34,8 @@
   let grid = $state<ContributionGrid | null>(null);
   let plan = $state<SnakePlan | null>(null);
   let error = $state('');
+  // se o modo ao vivo falhar pro próprio dono, cai pro SVG gerado no deploy
+  let useGenerated = $state(source === 'generated');
 
   if (source === 'live' && user) {
     fetchGrid(user)
@@ -39,7 +43,10 @@
         grid = g;
         plan = planSnake(g);
       })
-      .catch((e: Error) => (error = e.message));
+      .catch((e: Error) => {
+        if (user.toLowerCase() === owner) useGenerated = true;
+        else error = e.message;
+      });
   }
 
   /** Texto da linha de estatística, ex.: "1,234 contributions in the last year". */
@@ -50,7 +57,7 @@
 </script>
 
 <main>
-  {#if source === 'generated'}
+  {#if useGenerated}
     {#if generatedFailed}
       <p class="note">🐍 The snake is generated on deploy (once a day). Push to <code>main</code> or run the workflow and it will show up here.</p>
     {:else}

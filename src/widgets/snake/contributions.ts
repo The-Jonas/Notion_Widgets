@@ -62,7 +62,17 @@ export function demoGrid(seed = 7): ContributionGrid {
 /** Busca o último ano de contribuições do usuário. Lança erro com mensagem amigável. */
 export async function fetchGrid(user: string): Promise<ContributionGrid> {
   if (user.toLowerCase() === 'demo') return demoGrid();
-  const res = await fetch(`${API}${encodeURIComponent(user)}?y=last`);
+  // nomes do GitHub só têm letras, números e hífens (sem "_" nem espaços)
+  if (!/^[a-z\d](?:[a-z\d-]{0,38})$/i.test(user)) {
+    const guess = user.replace(/[^a-z\d-]+/gi, '-');
+    throw new Error(`"${user}" is not a valid GitHub username (only letters, numbers and "-"). Did you mean "${guess}"?`);
+  }
+  let res: Response;
+  try {
+    res = await fetch(`${API}${encodeURIComponent(user)}?y=last`);
+  } catch {
+    throw new Error('Could not reach the contributions service (network blocked or offline).');
+  }
   if (res.status === 404) throw new Error(`GitHub user "${user}" not found.`);
   if (!res.ok) throw new Error('Could not load contributions right now. Try again later.');
   const data = (await res.json()) as { contributions?: ApiDay[] };
