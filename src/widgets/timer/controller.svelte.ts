@@ -7,15 +7,28 @@ import {
   loadJSON, saveJSON, todayKey, formatClock, MINUTE, FOCUS_PRESETS,
 } from './engine';
 import { unlockAudio, playSound, playTick, askNotificationPermission, notify } from './alerts';
-import { getNumber, getBool } from '../../shared/params';
+import { getNumber, getBool, getParam } from '../../shared/params';
 
-/** Usa os ajustes salvos só se a URL do embed for a mesma de quando foram salvos;
- *  se você mudar a URL (ex.: focus=50), a URL vence. */
+/** Hash curto de um texto (djb2), usado pra dar um "endereço" a cada timer. */
+function shortHash(text: string): string {
+  let h = 5381;
+  for (let i = 0; i < text.length; i++) h = ((h << 5) + h + text.charCodeAt(i)) | 0;
+  return (h >>> 0).toString(36);
+}
+
+// Cada timer guarda seus dados numa "gaveta" própria, definida pela URL do embed
+// (ou por ?id=nome). Mesma URL = mesmo timer (sincronizado); URL diferente = timer separado.
+// Só a contagem do dia (🍅 e minutos) é compartilhada entre todos os timers.
+const SLOT = getParam('id', '').trim() || shortHash(location.search);
+const KEY = (name: string) => `nw-timer:${SLOT}:${name}`;
+const STATS_KEY = 'nw-timer-stats';
+
+/** Ajustes salvos deste timer (gaveta própria), por cima dos padrões da URL. */
 function loadSettings(): Settings {
-  const saved = loadJSON<{ url: string | null; settings: Settings | null }>('nw-timer-settings', { url: null, settings: null });
+  const saved = loadJSON<Settings | null>(KEY('settings'), null);
   const base = defaultSettings();
-  if (saved.url !== location.search || !saved.settings) return base;
-  return { ...base, ...saved.settings, labels: { ...base.labels, ...saved.settings.labels } };
+  if (!saved) return base;
+  return { ...base, ...saved, labels: { ...base.labels, ...saved.labels } };
 }
 
 const LABELS = { focus: 'FOCUS', short: 'SHORT BREAK', long: 'LONG BREAK', game: 'GAME TIME', over: 'GAME OVER' };
@@ -26,8 +39,8 @@ export class TimerController {
   readonly allowGame = getBool('gamemode', true);
   settings = $state<Settings>(loadSettings());
   timer = $state<TimerState>() as TimerState;
-  task = $state(loadJSON('nw-timer-task', { text: '' }).text);
-  stats = $state<DayStats>(loadJSON('nw-timer-stats', { date: todayKey(), sessions: 0, minutes: 0 }));
+  task = $state(loadJSON(KEY('task'), { text: '' }).text);
+  stats = $state<DayStats>(loadJSON(STATS_KEY, { date: todayKey(), sessions: 0, minutes: 0 }));
   settingsOpen = $state(false);
   now = $state(Date.now());
 
@@ -69,20 +82,36 @@ export class TimerController {
     if (this.stats.date !== todayKey()) this.stats = { date: todayKey(), sessions: 0, minutes: 0 };
   }
 
-  /** Carrega o estado salvo de um modo, ou cria um novo. Assim como os ajustes,
-   *  o estado só é reaproveitado se a URL do embed for a mesma (mudou a URL = começa do zero). */
+  /** Carrega o estado salvo de um modo (da gaveta deste timer), ou cria um novo. */
   private loadMode(mode: Mode): TimerState {
     const fresh = initialState(mode, this.settings, getNumber('game', 60));
-    const saved = loadJSON<{ url: string | null; state: TimerState | null }>(`nw-timer-${mode}`, { url: null, state: null });
-    return saved.url === location.search && saved.state ? saved.state : fresh;
+    return loadJSON<TimerState | null>(KEY(mode), null) ?? fresh;
   }
 
-  /** Salva tudo no navegador (chamado por um $effect no componente). */
+  /** Salva o estado deste timer no navegador (chamado por um $effect no componente).
+   *  A contagem do dia é salva à parte, só quando um foco termina (ver addFocusToStats). */
   persist(): void {
-    saveJSON(`nw-timer-${this.mode}`, { url: location.search, state: $state.snapshot(this.timer) });
-    saveJSON('nw-timer-settings', { url: location.search, settings: $state.snapshot(this.settings) });
-    saveJSON('nw-timer-task', { text: this.task });
-    saveJSON('nw-timer-stats', $state.snapshot(this.stats));
+    saveJSON(KEY(this.mode), $state.snapshot(this.timer));
+    saveJSON(KEY('settings'), $state.snapshot(this.settings));
+    saveJSON(KEY('task'), { text: this.task });
+  }
+
+  /** Mantém em sincronia outras cópias do MESMO timer abertas (outra aba ou outro embed
+   *  com a mesma URL) e a contagem do dia de todos os timers. */
+  listen(): () => void {
+    const onStorage = (e: StorageEvent) => {
+      if (!e.newValue) return;
+      try {
+        if (e.key === KEY(this.mode)) this.timer = JSON.parse(e.newValue);
+        else if (e.key === KEY('settings')) this.settings = { ...this.settings, ...JSON.parse(e.newValue) };
+        else if (e.key === KEY('task')) this.task = JSON.parse(e.newValue).text;
+        else if (e.key === STATS_KEY) this.stats = JSON.parse(e.newValue);
+      } catch {
+        /* valor inválido: ignora */
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
   }
 
   /** Avança o relógio interno: detecta fim de fase e toca o tique-taque. */
@@ -186,9 +215,11 @@ export class TimerController {
 
   /** Soma um foco completo na estatística de hoje. */
   private addFocusToStats(minutes: number): void {
-    if (this.stats.date !== todayKey()) this.stats = { date: todayKey(), sessions: 0, minutes: 0 };
-    this.stats.sessions += 1;
-    this.stats.minutes += minutes;
+    // relê do navegador antes de somar: outro timer pode ter contado um foco nesse meio-tempo
+    const saved = loadJSON<DayStats>(STATS_KEY, { date: todayKey(), sessions: 0, minutes: 0 });
+    const base = saved.date === todayKey() ? saved : { date: todayKey(), sessions: 0, minutes: 0 };
+    this.stats = { date: base.date, sessions: base.sessions + 1, minutes: base.minutes + minutes };
+    saveJSON(STATS_KEY, this.stats);
   }
 
   /** Troca entre FOCUS e GAME, mantendo o estado salvo de cada um. */

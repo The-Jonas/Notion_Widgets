@@ -220,3 +220,53 @@ export function ago(iso: string, pt: boolean): string {
   }
   return pt ? 'agora' : 'now';
 }
+
+export interface Commit {
+  message: string;   // só a primeira linha
+  date: string;
+  author: string;
+  sha: string;
+}
+
+export interface RepoDetails {
+  languages: { name: string; share: number }[];  // por bytes de código
+  commits: Commit[];
+}
+
+/** Detalhes de um repositório pro painel: linguagens (por bytes) e últimos commits. */
+export async function fetchRepoDetails(fullName: string): Promise<RepoDetails> {
+  if (fullName.startsWith('demo/')) {
+    return {
+      languages: [{ name: 'C++', share: 0.82 }, { name: 'CMake', share: 0.1 }, { name: 'Shell', share: 0.08 }],
+      commits: [
+        { message: 'feat: add lighthouse fog shader', date: new Date(Date.now() - 2 * 864e5).toISOString(), author: 'demo', sha: 'a1b2c3d' },
+        { message: 'fix: collision on stairs', date: new Date(Date.now() - 3 * 864e5).toISOString(), author: 'demo', sha: 'e4f5a6b' },
+        { message: 'refactor: split renderer', date: new Date(Date.now() - 6 * 864e5).toISOString(), author: 'luana', sha: 'c7d8e9f' },
+      ],
+    };
+  }
+  const key = `gh:details:${fullName.toLowerCase()}`;
+  const hit = cached<RepoDetails>(key);
+  if (hit) return hit;
+  const [langs, commits] = await Promise.all([
+    gh<Record<string, number>>(`/repos/${fullName}/languages`),
+    gh<{ sha: string; commit: { message: string; author: { name: string; date: string } }; author: { login: string } | null }[]>(
+      `/repos/${fullName}/commits?per_page=5`,
+    ).catch(() => []),
+  ]);
+  const total = Object.values(langs).reduce((a, b) => a + b, 0) || 1;
+  const details: RepoDetails = {
+    languages: Object.entries(langs)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([name, bytes]) => ({ name, share: bytes / total })),
+    commits: commits.map((c) => ({
+      message: c.commit.message.split('\n')[0],
+      date: c.commit.author.date,
+      author: c.author?.login ?? c.commit.author.name,
+      sha: c.sha.slice(0, 7),
+    })),
+  };
+  store(key, details);
+  return details;
+}

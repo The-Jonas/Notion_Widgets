@@ -4,6 +4,7 @@
   import { ago, type Repo } from '../api';
   import type { GitHubOptions } from '../options';
   import { langColor } from '../langs';
+  import RepoPanel from './RepoPanel.svelte';
 
   let { repos, opts }: { repos: Repo[]; opts: GitHubOptions } = $props();
   const shown = $derived(
@@ -12,17 +13,19 @@
       .sort((a, b) => (opts.sort === 'updated' ? b.pushedAt.localeCompare(a.pushedAt) : b.stars - a.stars || b.pushedAt.localeCompare(a.pushedAt)))
       .slice(0, repos.length === 1 ? 1 : opts.count),
   );
+  // repositório aberto no painel de detalhes (null = fechado)
+  let picked = $state<number | null>(null);
 </script>
 
 <!-- 4 repos viram 2x2; até 3 ficam numa linha; mais que 4, 3 por linha -->
 <div class="grid" class:single={shown.length === 1} class:many={shown.length > 6} style:--cols={shown.length <= 3 ? shown.length : shown.length === 4 ? 2 : 3}>
   {#each shown as r, i (r.fullName)}
-    <div class="repo">
+    <button class="repo" type="button" onclick={() => (picked = i)}>
       <div class="head">
         <span class="icon">⌸</span>
         <span class="name">{r.name}</span>
       </div>
-      <p class="desc">{r.description || (opts.pt ? 'Sem descrição' : 'No description')}</p>
+      <span class="desc">{r.description || (opts.pt ? 'Sem descrição' : 'No description')}</span>
       {#if r.topics.length}
         <div class="topics">{#each r.topics.slice(0, 3) as t (t)}<span>{t}</span>{/each}</div>
       {/if}
@@ -32,17 +35,25 @@
         <span>⑂ {r.forks}</span>
         <span class="when">{ago(r.pushedAt, opts.pt)}</span>
       </div>
-    </div>
+    </button>
   {/each}
 </div>
+
+{#if picked !== null}
+  <RepoPanel repos={shown} index={picked} {opts} onclose={() => (picked = null)} onnav={(i) => (picked = i)} />
+{/if}
 
 <style>
   .grid { width: 100%; display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap: 8px; }
   .grid.single { max-width: 420px; grid-template-columns: 1fr; }
   .repo {
+    all: unset; box-sizing: border-box; cursor: pointer;
+    transition: border-color 0.15s, transform 0.15s;
     display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border-radius: 12px;
     background: var(--bg-card); border: 1px solid var(--border); min-width: 0;
   }
+  .repo:hover { border-color: color-mix(in srgb, var(--text) 30%, transparent); transform: translateY(-2px); }
+  .repo:focus-visible { outline: 2px solid var(--accent); }
   .head { display: flex; align-items: center; gap: 6px; }
   .icon { color: var(--text-muted); }
   .name { font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: var(--accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

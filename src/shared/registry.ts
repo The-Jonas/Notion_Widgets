@@ -54,6 +54,7 @@ export const WIDGETS: WidgetInfo[] = [
     options: [
       { key: 'style', label: 'Style', type: 'select', default: 'ring', choices: ['ring', 'orbit', 'pill', 'card', 'retro', 'minimal', 'terminal'] },
       { key: 'gamemode', label: 'Show Game mode', type: 'toggle', default: '1' },
+      { key: 'id', label: 'Timer name (separate timers, same settings)', type: 'text', default: '' },
       { key: 'mode', label: 'Start in', type: 'select', default: 'focus', choices: ['focus', 'game'] },
       { key: 'focus', label: 'Focus (min)', type: 'number', default: '25' },
       { key: 'short', label: 'Short break (min)', type: 'number', default: '5' },
@@ -154,7 +155,7 @@ export const WIDGETS: WidgetInfo[] = [
       { key: 'repo', label: 'One repo (owner/name, optional)', type: 'text', default: '' },
       { key: 'count', label: 'Repos to show', type: 'select', default: '4', choices: ['2', '3', '4', '6', '8', '12', 'all'] },
       { key: 'forks', label: 'Include forks', type: 'toggle', default: '0' },
-      { key: 'sort', label: 'Sort repos by', type: 'select', default: 'stars', choices: ['stars', 'updated'] },
+      { key: 'sort', label: 'Sort repos by', type: 'select', default: 'updated', choices: ['updated', 'stars'] },
       { key: 'lang', label: 'Language', type: 'select', default: 'en-US', choices: ['en-US', 'pt-BR'] },
     ],
   },

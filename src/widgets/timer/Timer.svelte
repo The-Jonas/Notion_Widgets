@@ -23,6 +23,9 @@
   $effect(() => {
     t.persist();
   });
+
+  // sincroniza com outras cópias deste timer e com a contagem do dia
+  $effect(() => t.listen());
 </script>
 
 <main class="timer" data-phase={t.timer.phase}>

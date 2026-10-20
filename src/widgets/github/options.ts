@@ -24,7 +24,7 @@ export function readOptions(): GitHubOptions {
     repo: getParam('repo', '').trim().replace(/^https?:\/\/github\.com\//, '').replace(/\/$/, ''),
     count: getParam('count', '4') === 'all' ? 100 : Math.min(100, Math.max(1, Math.round(getNumber('count', 4)))),
     forks: getBool('forks', false),
-    sort: getParam('sort', 'stars') === 'updated' ? 'updated' : 'stars',
+    sort: getParam('sort', 'updated') === 'stars' ? 'stars' : 'updated',
     pt: getParam('lang', 'en-US') === 'pt-BR',
     mono: getParam('accent', 'blue') === 'mono',
     light: getParam('theme', 'dark') === 'light',
